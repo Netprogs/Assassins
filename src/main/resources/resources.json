@@ -1,0 +1,80 @@
+{
+  "messages": {
+
+    // Assassin - Kill
+    "assassins.command.kill.invalidPayment": "You must provide a payment amount.",
+    "assassins.command.kill.maxContracts": "<player> cannot have anymore contracts placed on them.",
+    "assassins.command.kill.protectedPlayer": "<player> is protected, you cannot kill them.",
+    "assassins.command.kill.alreadyHasContract": "You already have a contract out for this player.",
+    "assassins.command.kill.cannotContractSelf": "You cannot place a contract on yourself.",
+    "assassins.command.kill.completed": "You have requested that <player> be killed !",
+    "assassins.command.kill.help": "Create a contract.",
+    "assassins.command.kill.notEnoughFunds": "You do not have <price> available for this contract.",
+
+    // Assassin - Hunt
+    "assassins.command.hunt.protectedPlayer": "<player> is protected, you cannot hunt them.",
+    "assassins.command.hunt.cannotHuntSelf": "You cannot hunt yourself.",
+    "assassins.command.hunt.alreadyBeingHunted": "<player> is already being hunted.",
+    "assassins.command.hunt.completed": "You have <timeLimit> to kill <player> for <payment> !",
+    "assassins.command.hunt.none": "There are no contracts available.",
+    "assassins.command.hunt.help": "Assigns contract(s) to you.",
+
+    // Assassin - Contracts
+    "assassins.command.contracts.header": "[Hunting Contracts]",
+    "assassins.command.contracts.footer": "Use &e/assassin view&a to view details of player contracts.",
+    "assassins.command.contracts.none": "You have no contracts available.",
+    "assassins.command.contracts.wrongPage": "That page does not exist.",
+    "assassins.command.contracts.help": "Displays all hunting contracts.",
+
+    // Assassin - Cancel
+    "assassins.command.cancel.completed": "Contract against <player> has been cancelled.",
+    "assassins.command.cancel.cannotCancel": "The contract is either already cancelled, or being hunted.",
+    "assassins.command.cancel.help": "Cancels a contract.",
+
+    // Assassin - Wanted
+    "assassins.command.wanted.header": "[Assassin Contracts]",
+    "assassins.command.wanted.notAvailable": "Player is being hunted. &4[Assassin, Time Limit].",
+    "assassins.command.wanted.available": "Player is available to hunt.",
+    "assassins.command.wanted.none": "There are no contracts available.",
+    "assassins.command.wanted.wrongPage": "That page does not exist.",
+    "assassins.command.wanted.help": "Displays all contracts.",
+
+    // Assassin - View
+    "assassins.command.view.header": "[View Contracts]",
+    "assassins.command.view.footer": "<payment> Total payment for making the kill.",
+    "assassins.command.view.wrongPage": "That page does not exist.",
+    "assassins.command.view.none": "There are no contracts available.",
+    "assassins.command.view.help": "Displays contract details.",
+
+    // Assassin - Expired
+    "assassins.command.expired.header": "[Expired Contracts]",
+    "assassins.command.expired.footer": "<refund> refunded.",
+    "assassins.command.expired.none": "There are no expired contracts.",
+    "assassins.command.expired.help": "Refunds expired contracts.",
+
+    // Assassin - Kill Completed
+    "assassins.contract.assassin.completed": "You have killed <player> and earned <payment> !",
+    "assassins.contract.requestor.completed": "<player> has been killed by <assassin> !",
+
+    // Assassin - Protection
+    "assassins.protected.attacker": "Player is under protection and cannot be attacked.",
+    "assassins.protected.damager": "You are under protection and cannot attack anyone.",
+    "assassins.command.protect.help": "Toggles a player protection state.",
+    "assassins.command.protect.enabled": "<player> is now protected.",
+    "assassins.command.protect.disabled": "<player> is no longer protected.",
+
+    // Help General Messages
+    "plugin.help": "Displays a help page.",
+    "plugin.help.header": "[<plugin> Help]",
+    "plugin.help.footer": "[ Aliases /a, /killers, /k ]",
+    "plugin.help.noneAvailable": "You do not have any available commands to you for this plug-in.",
+    "plugin.help.wrongPage": "That page does not exist.",
+
+    // System errors
+    "plugin.error.offlinePlayer": "<player> appears to be offline. Try again later.",
+    "plugin.error.cannotFindPlayer": "Player <player> could not be found.",
+    "plugin.error.senderNotPlayer": "Sorry, you cannot run this from the console.",
+    "plugin.error.invalidPermissions": "Sorry, you do not have the permission to run this command.",
+    "plugin.error.unknownArguments": "Unknown arguments. Use &e/assassins help&c if needed."
+  }
+}

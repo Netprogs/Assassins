@@ -1,0 +1,60 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+	<name>Assassins</name>
+	<groupId>com.netprogs.minecraft.plugins.assassins</groupId>
+	<artifactId>Assassins</artifactId>
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
+  	<url>http://maven.apache.org</url>
+  
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+    
+	<repositories>
+
+		<repository>
+			<id>milkbowl-repo</id>
+			<url>http://ci.milkbowl.net/plugin/repository/everything/</url>
+		</repository>
+
+		<repository>
+			<id>bukkit-repo</id>
+			<url>http://repo.bukkit.org/content/repositories/releases/</url>
+		</repository>
+		
+	</repositories>
+
+	<!-- Bukkit -->
+	<dependencies>
+		<dependency>
+		<groupId>org.bukkit</groupId>
+		<artifactId>craftbukkit</artifactId>
+		<version>1.2.5-R3.0</version>
+		<type>jar</type>
+		<scope>provided</scope>
+	</dependency>
+
+	<!-- Vault -->
+	<dependency>
+		<groupId>net.milkbowl.vault</groupId>
+		<artifactId>Vault</artifactId>
+		<version>1.2.16-SNAPSHOT</version>
+		<type>jar</type>
+		<scope>provided</scope>
+	</dependency>
+
+  </dependencies>
+</project>

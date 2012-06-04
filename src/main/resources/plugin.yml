@@ -1,0 +1,50 @@
+name: Assassins
+main: com.netprogs.minecraft.plugins.assassins.AssassinsPlugin
+version: 1.0.0
+author: Scott Milne
+description: Allows players to become and/or hire "Assassins" on their servers.
+depend: [Vault]
+commands:
+   assassin:
+      description: Multiple commands, use "/assassin help" for details.
+      usage: "/assassin help"
+      aliases: [a,killers,k]
+permissions:
+   assassin.*:
+      description: Gives access to all assassin commands except protect.
+      children:
+         assassin.wanted: true
+         assassin.kill: true
+         assassin.cancel: true
+         assassin.expired: true
+         assassin.view: true
+         assassin.hunt: true
+         assassin.contracts: true
+         assassin.help: true
+   assassin.help:
+      description: Ability to use assassin help pages.
+      default: true
+   assassin.kill:
+      description: Ability to request a player to be killed.
+      default: op
+   assassin.cancel:
+      description: Ability to cancel a request for a player to be killed.
+      default: op
+   assassin.expired:
+      description: Ability to request refunds for expired contracts.
+      default: op
+   assassin.hunt:
+      description: Ability to accept a contract and hunt a player.
+      default: op
+   assassin.wanted:
+      description: Ability to view players with contracts on their heads.
+      default: op
+   assassin.view:
+      description: Ability to view all the contracts on a players head.
+      default: op
+   assassin.contracts:
+      description: Ability to view all contracts being hunted by yourself.
+      default: op
+   assassin.protect:
+      description: Ability to toggle a players protection status.
+      default: op

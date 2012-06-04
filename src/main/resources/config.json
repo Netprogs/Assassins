@@ -1,0 +1,13 @@
+{
+  // The maximum number of contracts a single player can have on them. -1 for unlimited.
+  "maximumContracts": -1,
+
+  // The amount of time (in minutes) that a contract is available for hunting. Default 1 day.
+  "contractExpireTime": 1440,
+
+  // The amount of time (in minutes) an assassin has to kill the player before the contract goes back to the wanted list.
+  "assassinExpireTime": 60,
+
+  // If you want to turn on debugging, set this to true
+  "loggingDebug": false
+}
