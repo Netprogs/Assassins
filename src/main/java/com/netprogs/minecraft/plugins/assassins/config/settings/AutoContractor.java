@@ -1,4 +1,6 @@
-package com.netprogs.minecraft.plugins.assassins.command;
+package com.netprogs.minecraft.plugins.assassins.config.settings;
+
+import java.util.List;
 
 /*
  * Copyright (C) 2012 Scott Milne
@@ -17,7 +19,26 @@ package com.netprogs.minecraft.plugins.assassins.command;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-public enum PluginPermission {
+public class AutoContractor {
 
-    join, quit, requests, friend, child, relationship, affair, engagement, marriage, divorce, priest, lawyer
+    // This allows you to enable/disable auto contracts.
+    private boolean enabled;
+
+    // The maximum number of auto contracts allowed to be listed at once.
+    private int maximumContracts;
+
+    // This is the list of contracts you wish to have people checked against upon login.
+    private List<AutoContract> contracts;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public int getMaximumContracts() {
+        return maximumContracts;
+    }
+
+    public List<AutoContract> getContracts() {
+        return contracts;
+    }
 }

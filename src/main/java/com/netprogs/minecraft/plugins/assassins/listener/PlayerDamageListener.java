@@ -1,11 +1,7 @@
 package com.netprogs.minecraft.plugins.assassins.listener;
 
-import java.util.logging.Logger;
-
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Creature;
@@ -37,8 +33,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 public class PlayerDamageListener implements Listener {
 
-    private final Logger logger = Logger.getLogger("Minecraft");
-
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 
@@ -50,8 +44,8 @@ public class PlayerDamageListener implements Listener {
         // check early to see what's being damaged
         if (event.getEntityType() != EntityType.PLAYER && !(event.getEntity() instanceof Tameable)) {
 
-            if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
-                logger.info("PlayerDamage_Entity: not using target");
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("PlayerDamage_Entity: not using target");
             }
 
             return;
@@ -61,8 +55,8 @@ public class PlayerDamageListener implements Listener {
         if (!(event.getDamager() instanceof Player) && !(event.getDamager() instanceof Projectile)
                 && !(event.getDamager() instanceof Tameable)) {
 
-            if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
-                logger.info("PlayerDamage_Entity: not using damager");
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("PlayerDamage_Entity: not using damager");
             }
 
             return;
@@ -94,8 +88,8 @@ public class PlayerDamageListener implements Listener {
 
         // no valid target, give up
         if (target == null) {
-            if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
-                logger.info("PlayerDamage_Entity: non-usable target");
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable target");
             }
             return;
         }
@@ -130,8 +124,8 @@ public class PlayerDamageListener implements Listener {
 
         // no valid damager, give up
         if (damager == null) {
-            if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
-                logger.info("PlayerDamage_Entity: non-usable damager");
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable damager");
             }
             return;
         }
@@ -139,10 +133,10 @@ public class PlayerDamageListener implements Listener {
         // At this point, we have both the target and the damager as player instances.
 
         // Check to see if this player is currently being protected and stop him from being attacked
-        if (PluginStorage.getInstance().isProtectedPlayer(target.getName())) {
+        if (AssassinsPlugin.getStorage().isProtectedPlayer(target.getName())) {
 
-            if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
-                logger.info("PlayerDamage_Entity: target under protection.");
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("PlayerDamage_Entity: target under protection.");
             }
 
             // kill the damage
@@ -159,7 +153,7 @@ public class PlayerDamageListener implements Listener {
             // tell them they can't attack the person
             MessageUtil.sendMessage(damager, "assassins.protected.attacker", ChatColor.RED);
 
-        } else if (PluginStorage.getInstance().isProtectedPlayer(damager.getName())) {
+        } else if (AssassinsPlugin.getStorage().isProtectedPlayer(damager.getName())) {
 
             // Make sure the protected player can't damage back anyone while under protection
             event.setCancelled(true);

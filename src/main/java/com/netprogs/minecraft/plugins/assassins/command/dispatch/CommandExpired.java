@@ -1,29 +1,28 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
-import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
+import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
-import com.netprogs.minecraft.plugins.assassins.command.util.PagedList;
-import com.netprogs.minecraft.plugins.assassins.command.util.PagedList.PagedItems;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Contract;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -47,9 +46,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins expired
  * Checks for any expired contracts the caller has and refund their money.
  */
-public class CommandExpired extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandExpired extends PluginCommand {
 
     public CommandExpired() {
         super(PluginCommandType.expired);
@@ -57,7 +54,8 @@ public class CommandExpired extends PluginCommand<IPluginSettings> {
 
     @Override
     public boolean run(JavaPlugin plugin, CommandSender sender, List<String> arguments)
-            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException {
+            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException,
+            SenderNotPlayerException {
 
         // check permissions
         if (!hasCommandPermission(sender)) {
@@ -69,61 +67,58 @@ public class CommandExpired extends PluginCommand<IPluginSettings> {
             throw new ArgumentsMissingException();
         }
 
-        // there is an optional page number, lets try to get it
-        int pageNumber = 1;
-        if (arguments.size() > 0) {
-            try {
-                pageNumber = Integer.valueOf(Integer.parseInt(arguments.get(0)));
-            } catch (Exception e) {
-                // don't bother reporting it, just assume page 1
-            }
+        // verify that the sender is actually a player
+        if (!(sender instanceof Player)) {
+            throw new SenderNotPlayerException();
         }
+
+        Player player = (Player) sender;
 
         // get the list of contracts for the player
-        List<Contract> contracts = PluginStorage.getInstance().getExpiredContracts(sender.getName());
-        PagedItems<Contract> pagedItems = PagedList.getPagedList(contracts, pageNumber, 10);
-        if (pagedItems.items == null) {
-            MessageUtil.sendHeaderMessage(sender, "assassins.command.expired.wrongPage.header", pageNumber,
-                    pagedItems.numFullPages);
-            MessageUtil.sendMessage(sender, "assassins.command.expired.wrongPage", ChatColor.RED);
-            return false;
-        }
+        List<Contract> contracts = AssassinsPlugin.getStorage().getExpiredContracts(sender.getName());
 
         // display the header
-        MessageUtil.sendHeaderMessage(sender, "assassins.command.expired.header", pageNumber, pagedItems.numFullPages);
+        MessageUtil.sendHeaderMessage(sender, "assassins.command.expired.header");
 
-        // grab the sub list for displaying
-        double totalRefund = 0;
-        for (Contract contract : pagedItems.items) {
+        // grab the list for displaying
+        for (Contract contract : contracts) {
 
-            totalRefund += contract.getPayment();
+            String paymentDisplay = "";
+            Payment payment = contract.getPayment();
+
+            if (payment.getPaymentType() == Payment.Type.cash) {
+
+                // refund the money
+                AssassinsPlugin.getVault().depositContractPayment(sender.getName(), payment.getCashAmount());
+
+                paymentDisplay = Double.toString(contract.getPayment().getCashAmount());
+
+            } else if (payment.getPaymentType() == Payment.Type.item) {
+
+                // return the item(s) to their inventory
+                Material material = Material.getMaterial(payment.getItemId());
+                ItemStack itemStack = new ItemStack(material, payment.getItemCount());
+                PlayerInventory inventory = player.getInventory();
+                inventory.addItem(itemStack);
+
+                paymentDisplay = contract.getPayment().getItemCount() + " " + material.name();
+            }
 
             // remove the contract
-            PluginStorage.getInstance().removeContract(sender.getName(), contract.getPlayerName());
+            AssassinsPlugin.getStorage().removeContract(sender.getName(), contract.getPlayerName());
 
             // send out a result message
-            sender.sendMessage("" + ChatColor.YELLOW + contract.getPayment() + " " + ChatColor.RED + ChatColor.GREEN
-                    + contract.getRequestPlayerName());
+            sender.sendMessage("" + ChatColor.YELLOW + paymentDisplay + " " + ChatColor.RED + ChatColor.GREEN
+                    + contract.getPlayerName());
 
             if (StringUtils.isNotBlank(contract.getReason())) {
                 sender.sendMessage(": " + ChatColor.WHITE + contract.getReason() + " ");
             }
         }
 
-        if (pagedItems.items.size() == 0) {
+        if (contracts.size() == 0) {
 
             MessageUtil.sendMessage(sender, "assassins.command.expired.none", ChatColor.GREEN);
-
-        } else {
-
-            // refund the money
-            VaultIntegration.getInstance().depositContractPayment(sender.getName(), totalRefund);
-
-            String footerSpacer = StringUtils.repeat("-", 52);
-            sender.sendMessage(ChatColor.GOLD + footerSpacer);
-
-            MessageUtil.sendMessage(sender, "assassins.command.expired.footer", ChatColor.GREEN, new MessageParameter(
-                    "<refund>", Double.toString(totalRefund), ChatColor.YELLOW));
         }
 
         return true;
@@ -132,7 +127,7 @@ public class CommandExpired extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

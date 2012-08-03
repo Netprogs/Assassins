@@ -7,13 +7,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
 import com.mysql.jdbc.StringUtils;
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Contract;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Contract.Type;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
 import com.netprogs.minecraft.plugins.assassins.storage.json.JsonDataManager;
 import com.netprogs.minecraft.plugins.assassins.view.ContractWantedItem;
@@ -39,35 +42,39 @@ import org.bukkit.entity.Player;
 
 public class PluginStorage {
 
-    private final Logger logger = Logger.getLogger("Minecraft");
-
-    private static final PluginStorage SINGLETON = new PluginStorage();
-
-    public static PluginStorage getInstance() {
-        return SINGLETON;
-    }
-
-    private PluginStorage() {
-    }
-
     private JsonDataManager dataManager = new JsonDataManager();
     private Map<String, PluginPlayer> loadedPlayerMap = new HashMap<String, PluginPlayer>();
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true);
 
     public PluginPlayer getPlayer(Player player) {
 
-        if (!loadedPlayerMap.containsKey(player.getName())) {
+        Lock lock = rwLock.writeLock();
+        lock.lock();
+        try {
 
-            PluginPlayer wrapper = new PluginPlayer(player);
-            loadedPlayerMap.put(player.getName(), wrapper);
-            return wrapper;
+            if (!loadedPlayerMap.containsKey(player.getName().toLowerCase())) {
+
+                PluginPlayer wrapper = new PluginPlayer(player);
+                loadedPlayerMap.put(player.getName().toLowerCase(), wrapper);
+                return wrapper;
+            }
+
+            return loadedPlayerMap.get(player.getName().toLowerCase());
+
+        } finally {
+            lock.unlock();
         }
-
-        return loadedPlayerMap.get(player.getName());
     }
 
     public void removePlayer(Player player) {
 
-        loadedPlayerMap.remove(player.getName());
+        Lock lock = rwLock.writeLock();
+        lock.lock();
+        try {
+            loadedPlayerMap.remove(player.getName().toLowerCase());
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isProtectedPlayer(String playerName) {
@@ -82,24 +89,35 @@ public class PluginStorage {
         dataManager.removeProtectedPlayer(playerName);
     }
 
-    public boolean createContract(String requestPlayerName, String playerName, double payment, String reason) {
+    public boolean alreadyHasContractOn(String requestPlayerName, String playerName) {
+        return dataManager.alreadyHasContractOn(requestPlayerName, playerName);
+    }
+
+    public boolean createContract(String requestPlayerName, String playerName, Payment payment, String reason) {
+        return createContract(requestPlayerName, playerName, payment, Type.normal, reason);
+    }
+
+    public boolean createContract(String requestPlayerName, String playerName, Payment payment, Type contractType,
+            String reason) {
 
         if (dataManager.alreadyHasContractOn(requestPlayerName, playerName)) {
             return false;
         }
 
-        int expiryTimeMinutes = PluginConfig.getInstance().getConfig(SettingsConfig.class).getContractExpireTime();
+        int expiryTimeMinutes = AssassinsPlugin.getSettings().getContractExpireTime();
         long currentTime = System.currentTimeMillis();
         long expiryDate = currentTime + (expiryTimeMinutes * 60 * 1000);
 
-        if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
+        if (AssassinsPlugin.getSettings().isLoggingDebug()) {
 
+            Logger logger = AssassinsPlugin.logger();
             logger.info("expiryTimeMinutes: " + expiryTimeMinutes);
             logger.info("currentTime: " + currentTime);
             logger.info("expiryDate: " + expiryDate);
         }
 
         Contract contract = new Contract();
+        contract.setContractType(contractType);
         contract.setPayment(payment);
         contract.setReason(reason);
         contract.setPlayerName(playerName);
@@ -148,22 +166,17 @@ public class PluginStorage {
 
         Map<String, PlayerContracts> contractMap = dataManager.getPlayerContracts();
 
-        long oldestExpiryTime = -1;
-
         for (String playerName : contractMap.keySet()) {
 
+            long oldestExpiryTime = -1;
             PlayerContracts playerContracts = contractMap.get(playerName);
 
             // get the list of non-expired contracts
             List<Contract> contracts = getContracts(playerName);
             if (contracts.size() > 0) {
 
-                // go through their list of contracts and get the total
-                double totalPayout = 0;
+                // go through their list of contracts and get the oldest expiry time
                 for (Contract contract : contracts) {
-
-                    totalPayout += contract.getPayment();
-
                     if (contract.getExpiryDate() < oldestExpiryTime || oldestExpiryTime == -1) {
                         oldestExpiryTime = contract.getExpiryDate();
                     }
@@ -171,7 +184,6 @@ public class PluginStorage {
 
                 ContractWantedItem listItem = new ContractWantedItem();
                 listItem.setNumberOfContracts(contracts.size());
-                listItem.setTotalPayment(totalPayout);
                 listItem.setOldestExpiryDate(oldestExpiryTime);
                 listItem.setPlayerName(playerName);
                 listItem.setHunterPlayerName(playerContracts.getAssassinPlayerName());
@@ -231,6 +243,25 @@ public class PluginStorage {
         }
 
         return activeContracts;
+    }
+
+    public List<Contract> getContracts(Contract.Type contractType) {
+
+        List<Contract> contractItems = new ArrayList<Contract>();
+        Map<String, PlayerContracts> contractMap = dataManager.getPlayerContracts();
+
+        for (String playerName : contractMap.keySet()) {
+
+            // go through their list of contracts and get the one's that match the given type
+            List<Contract> contracts = getContracts(playerName);
+            for (Contract contract : contracts) {
+                if (contract.getContractType() == contractType) {
+                    contractItems.add(contract);
+                }
+            }
+        }
+
+        return contractItems;
     }
 
     public Map<String, PlayerContracts> getHunterContracts(String hunterPlayerName) {

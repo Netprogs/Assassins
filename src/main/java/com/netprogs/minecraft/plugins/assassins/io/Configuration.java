@@ -1,4 +1,4 @@
-package com.netprogs.minecraft.plugins.assassins.config;
+package com.netprogs.minecraft.plugins.assassins.io;
 
 /*
  * Copyright (C) 2012 Scott Milne

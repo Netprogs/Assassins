@@ -1,16 +1,14 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpBook;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
@@ -35,9 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-public class CommandHelp extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandHelp extends PluginCommand {
 
     public CommandHelp() {
         super(PluginCommandType.help);
@@ -72,7 +68,7 @@ public class CommandHelp extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

@@ -10,6 +10,7 @@ import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
+import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotOnlineException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
@@ -19,7 +20,9 @@ import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -42,19 +45,19 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 
 /**
- * Command: /assassins hunt <player>
- * Takes all current active contracts and assigns them to the caller.
+ * Command: /assassins track <player>
+ * Points the compass to an estimated location of the player.
  */
-public class CommandHunt extends PluginCommand {
+public class CommandTrack extends PluginCommand {
 
-    public CommandHunt() {
-        super(PluginCommandType.hunt);
+    public CommandTrack() {
+        super(PluginCommandType.track);
     }
 
     @Override
     public boolean run(JavaPlugin plugin, CommandSender sender, List<String> arguments)
             throws ArgumentsMissingException, InvalidPermissionsException, SenderNotPlayerException,
-            PlayerNotFoundException {
+            PlayerNotFoundException, PlayerNotOnlineException {
 
         // check permissions
         if (!hasCommandPermission(sender)) {
@@ -71,6 +74,10 @@ public class CommandHunt extends PluginCommand {
             throw new ArgumentsMissingException();
         }
 
+        // convert the sender into a player instance
+        Player player = (Player) sender;
+        PluginPlayer pluginPlayer = AssassinsPlugin.getStorage().getPlayer(player);
+
         // verify the player name
         String tempPlayerName = arguments.remove(0);
         String huntedPlayerName = PlayerUtil.getPlayerName(tempPlayerName);
@@ -78,79 +85,53 @@ public class CommandHunt extends PluginCommand {
             throw new PlayerNotFoundException(tempPlayerName);
         }
 
-        // convert the sender into a player instance
-        Player player = (Player) sender;
+        // Get all your contracts for this player. This will return NULL if your hunter timer has expired
+        PlayerContracts playerContracts = pluginPlayer.getPlayerContracts(huntedPlayerName);
+        if (playerContracts == null) {
 
-        // check to see if they are under protection
-        if (AssassinsPlugin.getStorage().isProtectedPlayer(huntedPlayerName)) {
-
-            MessageUtil.sendMessage(sender, "assassins.command.hunt.protectedPlayer", ChatColor.GREEN,
+            MessageUtil.sendMessage(sender, "assassins.command.track.notHunting", ChatColor.GREEN,
                     new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
 
             return false;
         }
 
-        // check to see if they're trying to take a contract on themselves
-        if (huntedPlayerName.equalsIgnoreCase(sender.getName())) {
+        // get the bukkit player for the hunted player and make sure they're online
+        Player huntedPlayer = Bukkit.getPlayer(huntedPlayerName);
+        if (huntedPlayer == null) {
+            throw new PlayerNotOnlineException(tempPlayerName);
+        }
 
-            MessageUtil.sendMessage(sender, "assassins.command.hunt.cannotHuntSelf", ChatColor.RED);
+        // get the location of the player using the adjustment value
+        int adjustment = AssassinsPlugin.getSettings().getLocationTrackingAdjustment();
+        Location huntedPlayerLocation = PlayerUtil.getEstimatedLocation(huntedPlayer.getLocation(), adjustment);
+
+        // check to see if the hunted player is in the same world as the person tracking them
+        if (huntedPlayer.getWorld() != player.getWorld()) {
+
+            MessageUtil.sendMessage(sender, "assassins.command.track.notSameWorld", ChatColor.GREEN,
+                    new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
+
             return false;
         }
 
-        // get the list of active contracts for the player being hunted
-        PlayerContracts playerContracts = AssassinsPlugin.getStorage().getPlayerContracts(huntedPlayerName);
-        if (playerContracts != null && playerContracts.getContracts().size() > 0) {
+        // now set the compass of the assassin to point in that location
+        player.setCompassTarget(huntedPlayerLocation);
 
-            // check to see if the player is already being hunted
-            if (!playerContracts.isAvailable()) {
+        // display to the sender the results also
+        MessageParameter locationXParam =
+                new MessageParameter("<locationX>", Integer.toString(huntedPlayerLocation.getBlockX()), ChatColor.AQUA);
 
-                MessageUtil.sendMessage(sender, "assassins.command.hunt.alreadyBeingHunted", ChatColor.RED,
-                        new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
+        MessageParameter locationZParam =
+                new MessageParameter("<locationZ>", Integer.toString(huntedPlayerLocation.getBlockZ()), ChatColor.AQUA);
 
-                return false;
-            }
+        MessageParameter playerParam = new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA);
 
-            int assassinExpireTime = AssassinsPlugin.getSettings().getAssassinExpireTime();
-            long currentTime = System.currentTimeMillis();
+        List<MessageParameter> requestParameters = new ArrayList<MessageParameter>();
+        requestParameters.add(locationXParam);
+        requestParameters.add(locationZParam);
+        requestParameters.add(playerParam);
 
-            // convert to milliseconds
-            long assassinTimeLimit = currentTime + (assassinExpireTime * 60 * 1000);
-
-            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
-
-                plugin.getLogger().info("assassinName: " + sender.getName());
-                plugin.getLogger().info("assassinExpireTime: " + assassinExpireTime);
-                plugin.getLogger().info("currentTime: " + currentTime);
-                plugin.getLogger().info("assassinTimeLimit: " + assassinTimeLimit);
-            }
-
-            playerContracts.setAssassinPlayerName(sender.getName());
-            playerContracts.setAssassinTimeLimit(assassinTimeLimit);
-
-            // save all the changes
-            AssassinsPlugin.getStorage().saveAll();
-
-            // add these contracts to their list
-            PluginPlayer pluginPlayer = AssassinsPlugin.getStorage().getPlayer(player);
-            pluginPlayer.addPlayerContracts(huntedPlayerName, playerContracts);
-
-            // show their response message
-            MessageParameter timeLimitParam =
-                    new MessageParameter("<timeLimit>", MessageUtil.formatTime(playerContracts
-                            .getAssassinTimeRemaining()), ChatColor.RED);
-
-            MessageParameter playerParam = new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA);
-
-            List<MessageParameter> requestParameters = new ArrayList<MessageParameter>();
-            requestParameters.add(timeLimitParam);
-            requestParameters.add(playerParam);
-
-            MessageUtil.sendMessage(sender, "assassins.command.hunt.completed", ChatColor.GREEN, requestParameters);
-
-        } else {
-
-            MessageUtil.sendMessage(sender, "assassins.command.hunt.none", ChatColor.GREEN);
-        }
+        MessageUtil.sendMessage(sender, "assassins.command.track.compass", ChatColor.GREEN, requestParameters);
 
         return true;
     }
@@ -163,7 +144,7 @@ public class CommandHunt extends PluginCommand {
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());
         mainCommand.setArguments("<player>");
-        mainCommand.setDescription(config.getResource("assassins.command.hunt.help"));
+        mainCommand.setDescription(config.getResource("assassins.command.track.help"));
 
         HelpSegment helpSegment = new HelpSegment(getCommandType());
         helpSegment.addEntry(mainCommand);

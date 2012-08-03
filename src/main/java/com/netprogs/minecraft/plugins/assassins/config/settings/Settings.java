@@ -28,6 +28,15 @@ public class Settings {
     // The amount of time (in minutes) an assassin has to kill player before the contract goes back to the wanted list.
     private int assassinExpireTime;
 
+    // The distance (in blocks) to round to for giving "estimated" location of a player being hunted
+    private int locationTrackingAdjustment;
+
+    // The blitz settings
+    private Blitz blitz;
+
+    // The Auto Contract settings
+    private AutoContractor autoContractor;
+
     private boolean loggingDebug;
 
     public boolean isLoggingDebug() {
@@ -44,5 +53,17 @@ public class Settings {
 
     public int getAssassinExpireTime() {
         return assassinExpireTime;
+    }
+
+    public int getLocationTrackingAdjustment() {
+        return locationTrackingAdjustment;
+    }
+
+    public AutoContractor getAutoContractor() {
+        return autoContractor;
+    }
+
+    public Blitz getBlitz() {
+        return blitz;
     }
 }

@@ -1,6 +1,6 @@
 name: Assassins
 main: com.netprogs.minecraft.plugins.assassins.AssassinsPlugin
-version: 1.0.0
+version: 1.2.0
 author: Scott Milne
 description: Allows players to become and/or hire "Assassins" on their servers.
 depend: [Vault]
@@ -15,10 +15,13 @@ permissions:
       children:
          assassin.wanted: true
          assassin.kill: true
+         assassin.revenge: true
          assassin.cancel: true
          assassin.expired: true
          assassin.view: true
          assassin.hunt: true
+         assassin.track: true
+         assassin.blitz: true
          assassin.contracts: true
          assassin.help: true
    assassin.help:
@@ -26,6 +29,9 @@ permissions:
       default: true
    assassin.kill:
       description: Ability to request a player to be killed.
+      default: op
+   assassin.revenge:
+      description: Ability to request a revenge contract.
       default: op
    assassin.cancel:
       description: Ability to cancel a request for a player to be killed.
@@ -35,6 +41,12 @@ permissions:
       default: op
    assassin.hunt:
       description: Ability to accept a contract and hunt a player.
+      default: op
+   assassin.track:
+      description: Ability to track a player you are hunting.
+      default: op
+   assassin.blitz:
+      description: Ability to blitz a player you are hunting.
       default: op
    assassin.wanted:
       description: Ability to view players with contracts on their heads.

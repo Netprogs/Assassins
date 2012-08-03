@@ -19,17 +19,42 @@ package com.netprogs.minecraft.plugins.assassins.storage.data;
 
 public class Contract {
 
-    private double payment;
+    public enum Type {
+        normal, revenge, auto
+    }
+
+    private transient Type contractTypeEnum;
+    private String contractType;
+
+    private Payment payment;
     private String playerName;
     private String requestPlayerName;
     private String reason;
     private long expiryDate;
 
-    public double getPayment() {
+    public void setContractType(Type contractType) {
+        this.contractTypeEnum = contractType;
+        this.contractType = contractType.toString();
+    }
+
+    public Type getContractType() {
+
+        if (contractType == null) {
+            contractType = Type.normal.toString();
+        }
+
+        if (contractTypeEnum == null) {
+            contractTypeEnum = Type.valueOf(contractType);
+        }
+
+        return contractTypeEnum;
+    }
+
+    public Payment getPayment() {
         return payment;
     }
 
-    public void setPayment(double payment) {
+    public void setPayment(Payment payment) {
         this.payment = payment;
     }
 

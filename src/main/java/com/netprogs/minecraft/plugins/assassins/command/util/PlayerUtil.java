@@ -1,6 +1,7 @@
 package com.netprogs.minecraft.plugins.assassins.command.util;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -52,28 +53,18 @@ public class PlayerUtil {
 
     public static boolean isValidPlayer(String searchPlayer) {
 
-        // get the base player information
-        Player player = Bukkit.getServer().getPlayer(searchPlayer);
-        if (player != null) {
+        return (getPlayerName(searchPlayer) != null);
+    }
 
-            return true;
+    public static Location getEstimatedLocation(Location playerLocation, int locationTrackingAdjustment) {
 
-        } else {
+        // we don't really care about their y location so we won't bother calculating it
+        int x = playerLocation.getBlockX();
+        int z = playerLocation.getBlockZ();
 
-            // check to see if they are off-line
-            OfflinePlayer offlinePlayer = Bukkit.getServer().getOfflinePlayer(searchPlayer);
-            if (offlinePlayer != null) {
+        x = Math.round(x / locationTrackingAdjustment) * locationTrackingAdjustment;
+        z = Math.round(z / locationTrackingAdjustment) * locationTrackingAdjustment;
 
-                // if they've never logged in, then we're not using them
-                if (offlinePlayer.getLastPlayed() == 0) {
-                    return false;
-                }
-
-                // they've logged in before, we're good
-                return true;
-            }
-        }
-
-        return false;
+        return new Location(playerLocation.getWorld(), x, 0.0D, z);
     }
 }

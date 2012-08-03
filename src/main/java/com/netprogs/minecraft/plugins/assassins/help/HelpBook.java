@@ -3,10 +3,9 @@ package com.netprogs.minecraft.plugins.assassins.help;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -71,7 +70,7 @@ public class HelpBook {
             for (HelpSegment helpSegment : helpPage.getSegments()) {
 
                 // if they're allowed access, add the segment
-                if (VaultIntegration.getInstance().hasCommandPermission(sender, helpSegment.getCommandType())) {
+                if (AssassinsPlugin.getVault().hasCommandPermission(sender, helpSegment.getCommandType())) {
                     newHelpPage.addSegment(helpSegment);
                 }
             }
@@ -87,7 +86,7 @@ public class HelpBook {
         sendMessage(sender, header);
 
         // get the resources
-        ResourcesConfig resources = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig resources = AssassinsPlugin.getResources();
 
         // check to make sure the page number is valid
         if (pageNumber <= 0 || pageNumber > availableHelpPages.size()) {
@@ -144,7 +143,7 @@ public class HelpBook {
 
     private static String createHeader(String pluginName, List<HelpPage> helpPageList, int pageNumber) {
 
-        ResourcesConfig resources = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig resources = AssassinsPlugin.getResources();
 
         // create our header
         String helpTitle = resources.getResource("plugin.help.header");

@@ -17,16 +17,9 @@ package com.netprogs.minecraft.plugins.assassins.config.settings;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import com.netprogs.minecraft.plugins.assassins.config.JsonConfiguration;
+import com.netprogs.minecraft.plugins.assassins.io.JsonConfiguration;
 
 public class SettingsConfig extends JsonConfiguration<Settings> {
-
-    // The settings map for the plugin.
-    private final Map<Class<? extends IPluginSettings>, IPluginSettings> settingsMap =
-            new LinkedHashMap<Class<? extends IPluginSettings>, IPluginSettings>();
 
     public SettingsConfig(String configFileName) {
         super(configFileName);
@@ -48,8 +41,15 @@ public class SettingsConfig extends JsonConfiguration<Settings> {
         return getDataObject().getAssassinExpireTime();
     }
 
-    public <T extends IPluginSettings> T getPluginSettings(Class<T> settingsClass) {
+    public int getLocationTrackingAdjustment() {
+        return getDataObject().getLocationTrackingAdjustment();
+    }
 
-        return settingsClass.cast(settingsMap.get(settingsClass));
+    public AutoContractor getAutoContractor() {
+        return getDataObject().getAutoContractor();
+    }
+
+    public Blitz getBlitz() {
+        return getDataObject().getBlitz();
     }
 }

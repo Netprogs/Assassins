@@ -1,8 +1,8 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
@@ -11,12 +11,9 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFound
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -43,9 +40,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins protect <player>
  * Toggle a players protection status. When protected, they cannot be killed or damaged by other players.
  */
-public class CommandProtect extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandProtect extends PluginCommand {
 
     public CommandProtect() {
         super(PluginCommandType.protect);
@@ -73,16 +68,16 @@ public class CommandProtect extends PluginCommand<IPluginSettings> {
         }
 
         // check to see if they are under protection
-        if (PluginStorage.getInstance().isProtectedPlayer(huntedPlayerName)) {
+        if (AssassinsPlugin.getStorage().isProtectedPlayer(huntedPlayerName)) {
 
-            PluginStorage.getInstance().removeProtectedPlayer(huntedPlayerName);
+            AssassinsPlugin.getStorage().removeProtectedPlayer(huntedPlayerName);
 
             MessageUtil.sendMessage(sender, "assassins.command.protect.disabled", ChatColor.GOLD, new MessageParameter(
                     "<player>", huntedPlayerName, ChatColor.AQUA));
 
         } else {
 
-            PluginStorage.getInstance().addProtectedPlayer(huntedPlayerName);
+            AssassinsPlugin.getStorage().addProtectedPlayer(huntedPlayerName);
 
             MessageUtil.sendMessage(sender, "assassins.command.protect.enabled", ChatColor.GOLD, new MessageParameter(
                     "<player>", huntedPlayerName, ChatColor.AQUA));
@@ -94,7 +89,7 @@ public class CommandProtect extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

@@ -3,6 +3,8 @@ package com.netprogs.minecraft.plugins.assassins.storage.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.netprogs.minecraft.plugins.assassins.storage.data.Contract.Type;
+
 import org.apache.commons.lang.StringUtils;
 
 /*
@@ -28,8 +30,8 @@ public class PlayerContracts {
     private String assassinPlayerName;
     private long assassinTimeLimit;
 
-    // Map<PlayerName, ListOfContracts>
     private List<Contract> contracts = new ArrayList<Contract>();
+    private List<Contract> revengeContracts = new ArrayList<Contract>();
 
     public List<Contract> getContracts() {
         return contracts;
@@ -63,21 +65,38 @@ public class PlayerContracts {
         return !(getAssassinTimeRemaining() > 0 && StringUtils.isNotBlank(assassinPlayerName));
     }
 
-    public double getTotalPayment() {
-
-        double payment = 0;
-        for (Contract contract : contracts) {
-            payment += contract.getPayment();
-        }
-
-        return payment;
-    }
-
     public String getPlayerName() {
         return playerName;
     }
 
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
+    }
+
+    public boolean storeContractsForRevenge() {
+
+        // clear out the revenge list so we're only tracking it once per assassination
+        revengeContracts.clear();
+
+        // go through each one and make sure it's not a double revenge or an auto-contract
+        for (Contract contract : contracts) {
+            if (contract.getContractType() != Type.revenge && contract.getContractType() != Type.auto) {
+                revengeContracts.add(contract);
+            }
+        }
+
+        // clear out the contract list
+        contracts.clear();
+
+        // return the flag saying if any were stored
+        return revengeContracts.size() > 0;
+    }
+
+    public List<Contract> getRevengeContracts() {
+        return revengeContracts;
+    }
+
+    public void clearRevengeContracts() {
+        revengeContracts.clear();
     }
 }

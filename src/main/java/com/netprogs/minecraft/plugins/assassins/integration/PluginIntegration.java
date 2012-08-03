@@ -21,7 +21,34 @@ import org.bukkit.plugin.Plugin;
 
 public abstract class PluginIntegration {
 
-    public abstract void initialize(Plugin plugin);
+    private Plugin plugin;
+    private String basePermissionPath;
+    private boolean isLoggingDebug;
+
+    public PluginIntegration(Plugin plugin, String basePermissionPath, boolean isLoggingDebug) {
+
+        this.plugin = plugin;
+        this.basePermissionPath = basePermissionPath;
+        this.isLoggingDebug = isLoggingDebug;
+    }
+
+    protected Plugin getPlugin() {
+        return plugin;
+    }
+
+    protected boolean isLoggingDebug() {
+        return isLoggingDebug;
+    }
+
+    protected String getBasePermissionPath() {
+        return basePermissionPath;
+    }
+
+    protected abstract boolean isPluginEnabled();
+
+    protected abstract boolean isPluginLoaded();
+
+    public abstract void initialize();
 
     public boolean isEnabled() {
 
@@ -36,8 +63,4 @@ public abstract class PluginIntegration {
         // the component was not installed
         return false;
     }
-
-    protected abstract boolean isPluginEnabled();
-
-    protected abstract boolean isPluginLoaded();
 }

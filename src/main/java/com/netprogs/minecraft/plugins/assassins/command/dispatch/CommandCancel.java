@@ -1,27 +1,29 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
+import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Contract;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -45,9 +47,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins cancel <player>
  * Cancels a current contract for the given player. Can only be run by the person who made the contract.
  */
-public class CommandCancel extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandCancel extends PluginCommand {
 
     public CommandCancel() {
         super(PluginCommandType.cancel);
@@ -55,7 +55,8 @@ public class CommandCancel extends PluginCommand<IPluginSettings> {
 
     @Override
     public boolean run(JavaPlugin plugin, CommandSender sender, List<String> arguments)
-            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException {
+            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException,
+            SenderNotPlayerException {
 
         // check permissions
         if (!hasCommandPermission(sender)) {
@@ -74,12 +75,31 @@ public class CommandCancel extends PluginCommand<IPluginSettings> {
             throw new PlayerNotFoundException(tempPlayerName);
         }
 
+        // verify that the sender is actually a player
+        if (!(sender instanceof Player)) {
+            throw new SenderNotPlayerException();
+        }
+
+        Player player = (Player) sender;
+
         // try to remove the contract
-        Contract contract = PluginStorage.getInstance().removeContract(sender.getName(), huntedPlayerName);
+        Contract contract = AssassinsPlugin.getStorage().removeContract(sender.getName(), huntedPlayerName);
         if (contract != null) {
 
-            // refund the money
-            VaultIntegration.getInstance().depositContractPayment(sender.getName(), contract.getPayment());
+            Payment payment = contract.getPayment();
+            if (payment.getPaymentType() == Payment.Type.cash) {
+
+                // refund the money
+                AssassinsPlugin.getVault().depositContractPayment(sender.getName(), payment.getCashAmount());
+
+            } else if (payment.getPaymentType() == Payment.Type.item) {
+
+                // return the item(s) to their inventory
+                Material material = Material.getMaterial(payment.getItemId());
+                ItemStack itemStack = new ItemStack(material, payment.getItemCount());
+                PlayerInventory inventory = player.getInventory();
+                inventory.addItem(itemStack);
+            }
 
             MessageUtil.sendMessage(sender, "assassins.command.cancel.completed", ChatColor.GREEN,
                     new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
@@ -95,7 +115,7 @@ public class CommandCancel extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

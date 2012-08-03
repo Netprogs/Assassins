@@ -1,6 +1,4 @@
-package com.netprogs.minecraft.plugins.assassins.config.resources;
-
-import com.netprogs.minecraft.plugins.assassins.io.JsonConfiguration;
+package com.netprogs.minecraft.plugins.assassins.config.settings;
 
 /*
  * Copyright (C) 2012 Scott Milne
@@ -19,13 +17,26 @@ import com.netprogs.minecraft.plugins.assassins.io.JsonConfiguration;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-public class ResourcesConfig extends JsonConfiguration<Resources> {
+public class AutoContract {
 
-    public ResourcesConfig(String configFileName) {
-        super(configFileName);
+    private int chance;
+    private String payment;
+    private String name;
+    private String reason;
+
+    public int getChance() {
+        return chance;
     }
 
-    public String getResource(String key) {
-        return getDataObject().getMessages().get(key);
+    public String getPayment() {
+        return payment;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getReason() {
+        return reason;
     }
 }

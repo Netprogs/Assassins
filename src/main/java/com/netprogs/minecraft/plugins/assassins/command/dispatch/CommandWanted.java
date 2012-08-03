@@ -1,8 +1,8 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
@@ -11,12 +11,9 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFound
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList.PagedItems;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.view.ContractWantedItem;
 
 import org.apache.commons.lang.StringUtils;
@@ -45,9 +42,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins wanted
  * Displays all the available contracts on a per person grouping.
  */
-public class CommandWanted extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandWanted extends PluginCommand {
 
     public CommandWanted() {
         super(PluginCommandType.wanted);
@@ -72,7 +67,7 @@ public class CommandWanted extends PluginCommand<IPluginSettings> {
         }
 
         // get the list of contracts and get the page from them
-        List<ContractWantedItem> contracts = PluginStorage.getInstance().getContracts();
+        List<ContractWantedItem> contracts = AssassinsPlugin.getStorage().getContracts();
         PagedItems<ContractWantedItem> pagedItems = PagedList.getPagedList(contracts, pageNumber, 10);
         if (pagedItems.items == null) {
             MessageUtil.sendHeaderMessage(sender, "assassins.command.wanted.header", pageNumber,
@@ -84,8 +79,7 @@ public class CommandWanted extends PluginCommand<IPluginSettings> {
         // display the header
         MessageUtil.sendHeaderMessage(sender, "assassins.command.wanted.header", pageNumber, pagedItems.numFullPages);
 
-        String countSpacer = StringUtils.repeat("0", 3);
-        String priceSpacer = StringUtils.repeat(" ", 10);
+        String countSpacer = StringUtils.repeat("0", 2);
 
         // grab the sub list for displaying
         for (ContractWantedItem item : pagedItems.items) {
@@ -93,19 +87,15 @@ public class CommandWanted extends PluginCommand<IPluginSettings> {
             String numContracts = Integer.toString(item.getNumberOfContracts());
             String numSpacer = countSpacer.substring(numContracts.length());
 
-            String totalPayment = Double.toString(item.getTotalPayment());
-            String paymentSpacer = priceSpacer.substring(totalPayment.length());
-
             if (item.isAvailable()) {
 
-                sender.sendMessage("" + ChatColor.GREEN + numSpacer + numContracts + " " + totalPayment + paymentSpacer
-                        + " " + item.getPlayerName());
+                sender.sendMessage(ChatColor.GREEN + "" + MessageUtil.formatTime(item.getOldestExpiryTimeRemaining())
+                        + " " + numSpacer + numContracts + " " + item.getPlayerName());
 
             } else {
 
-                sender.sendMessage("" + ChatColor.RED + numSpacer + numContracts + " " + totalPayment + paymentSpacer
-                        + " " + item.getPlayerName() + ChatColor.DARK_RED + " [" + item.getHunterPlayerName() + ", "
-                        + MessageUtil.formatTime(item.getHunterTimeRemaining()) + "]");
+                sender.sendMessage(ChatColor.RED + "" + MessageUtil.formatTime(item.getHunterTimeRemaining()) + " "
+                        + numSpacer + numContracts + " " + item.getPlayerName());
             }
         }
 
@@ -129,7 +119,7 @@ public class CommandWanted extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

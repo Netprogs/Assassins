@@ -21,16 +21,20 @@ package com.netprogs.minecraft.plugins.assassins;
  */
 
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.netprogs.minecraft.plugins.assassins.command.PluginDispatcher;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
+import com.netprogs.minecraft.plugins.assassins.command.util.TimerUtil;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
 import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
 import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
+import com.netprogs.minecraft.plugins.assassins.listener.AutoContractListener;
 import com.netprogs.minecraft.plugins.assassins.listener.PlayerDamageListener;
 import com.netprogs.minecraft.plugins.assassins.listener.PlayerDeathListener;
 import com.netprogs.minecraft.plugins.assassins.listener.PlayerQuitListener;
+import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -41,6 +45,24 @@ public class AssassinsPlugin extends JavaPlugin {
 
     // expose the instance of this class as a global so we can better access it's methods
     public static AssassinsPlugin instance;
+
+    // used for sending completely anonymous data to http://mcstats.org for usage tracking
+    private Metrics metrics;
+
+    // used to hold all the plug-in settings
+    private SettingsConfig settingsConfig;
+
+    // used to hold all the plug-in resources
+    private ResourcesConfig resourcesConfig;
+
+    // used to access the data storage
+    private PluginStorage storage;
+
+    // used to access Vault
+    private VaultIntegration vault;
+
+    // used to manage command timers
+    private TimerUtil commandTimer;
 
     private String pluginName;
     private File pluginFolder;
@@ -57,12 +79,23 @@ public class AssassinsPlugin extends JavaPlugin {
         pluginName = getDescription().getName();
         pluginFolder = getDataFolder();
 
-        // load the rank data from the XML file
-        loadConfigurations();
+        // create the settings configuration object
+        settingsConfig = new SettingsConfig(getDataFolder() + "/config.json");
+        settingsConfig.loadConfig();
+
+        // create the resources configuration object
+        resourcesConfig = new ResourcesConfig(getDataFolder() + "/resources.json");
+        resourcesConfig.loadConfig();
+
+        // create the data storage object
+        storage = new PluginStorage();
+
+        // create the vault integration object
+        vault = new VaultIntegration(this, "assassin", settingsConfig.isLoggingDebug());
+        vault.initialize();
 
         // check to make sure Vault is installed
-        VaultIntegration.getInstance().initialize(this);
-        if (!VaultIntegration.getInstance().isEnabled()) {
+        if (!vault.isEnabled()) {
             logger.info("[" + pdfFile.getName() + "] v" + pdfFile.getVersion() + " has been disabled.");
             return;
         }
@@ -72,25 +105,35 @@ public class AssassinsPlugin extends JavaPlugin {
         getCommand("assassin").setExecutor(dispatcher);
 
         // attach the events to our listeners
+        getServer().getPluginManager().registerEvents(new AutoContractListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerDamageListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 
+        // create the command timer instance
+        commandTimer = new TimerUtil(this, settingsConfig.isLoggingDebug());
+
+        // start up the metrics engine
+        try {
+
+            metrics = new Metrics(this);
+            metrics.start();
+
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error while enabling Metrics.");
+        }
+
         // Okay, we're done
         logger.info("[" + pdfFile.getName() + "] v" + pdfFile.getVersion() + " has been enabled.");
-    }
-
-    public void loadConfigurations() {
-
-        PluginConfig.getInstance().reset();
-        PluginConfig.getInstance().register(new SettingsConfig(getDataFolder() + "/config.json"));
-        PluginConfig.getInstance().register(new ResourcesConfig(getDataFolder() + "/resources.json"));
     }
 
     public void onDisable() {
 
         PluginDescriptionFile pdfFile = getDescription();
         this.logger.info("[" + pdfFile.getName() + "] has been disabled.");
+
+        // clear out all the static references to avoid leaks
+        instance = null;
     }
 
     public String getPluginName() {
@@ -99,5 +142,29 @@ public class AssassinsPlugin extends JavaPlugin {
 
     public File getPluginFolder() {
         return pluginFolder;
+    }
+
+    public static Logger logger() {
+        return instance.getLogger();
+    }
+
+    public static VaultIntegration getVault() {
+        return instance.vault;
+    }
+
+    public static PluginStorage getStorage() {
+        return instance.storage;
+    }
+
+    public static SettingsConfig getSettings() {
+        return instance.settingsConfig;
+    }
+
+    public static ResourcesConfig getResources() {
+        return instance.resourcesConfig;
+    }
+
+    public static TimerUtil getCommandTimer() {
+        return instance.commandTimer;
     }
 }

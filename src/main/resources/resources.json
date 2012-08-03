@@ -2,29 +2,56 @@
   "messages": {
 
     // Assassin - Kill
-    "assassins.command.kill.invalidPayment": "You must provide a payment amount.",
     "assassins.command.kill.maxContracts": "<player> cannot have anymore contracts placed on them.",
     "assassins.command.kill.protectedPlayer": "<player> is protected, you cannot kill them.",
     "assassins.command.kill.alreadyHasContract": "You already have a contract out for this player.",
     "assassins.command.kill.cannotContractSelf": "You cannot place a contract on yourself.",
     "assassins.command.kill.completed": "You have requested that <player> be killed !",
-    "assassins.command.kill.help": "Create a contract.",
+    "assassins.command.kill.invalidPayment.cash": "Invalid cash amount.",
+    "assassins.command.kill.invalidPayment.count": "Invalid item count.",
+    "assassins.command.kill.invalidPayment.material": "Invalid material.",
+    "assassins.command.kill.invalidPayment.stack": "You don't have enough in your inventory.",
     "assassins.command.kill.notEnoughFunds": "You do not have <price> available for this contract.",
+    "assassins.command.kill.help": "Create contract.",
+
+    // Assassin - Revenge
+    "assassins.command.revenge.maxContracts": "<player> cannot have anymore contracts placed on them.",
+    "assassins.command.revenge.protectedPlayer": "<player> is protected, you cannot kill them.",
+    "assassins.command.revenge.alreadyHasContract": "You already have a contract out for this player.",
+    "assassins.command.revenge.noneAvailable": "There is nobody available to get revenge on.",
+    "assassins.command.revenge.completed": "You have requested that <player> be killed !",
+    "assassins.command.revenge.reason": "Revenge !",
+    "assassins.command.revenge.help": "Create revenge contracts.",
 
     // Assassin - Hunt
     "assassins.command.hunt.protectedPlayer": "<player> is protected, you cannot hunt them.",
     "assassins.command.hunt.cannotHuntSelf": "You cannot hunt yourself.",
     "assassins.command.hunt.alreadyBeingHunted": "<player> is already being hunted.",
-    "assassins.command.hunt.completed": "You have <timeLimit> to kill <player> for <payment> !",
+    "assassins.command.hunt.completed": "You have <timeLimit> to kill <player> !",
     "assassins.command.hunt.none": "There are no contracts available.",
     "assassins.command.hunt.help": "Assigns contract(s) to you.",
 
+    // Assassin - Track
+    "assassins.command.track.compass": "Your compass is now pointing to <player> (<locationX>, <locationZ>).",
+    "assassins.command.track.notHunting": "You are not hunting <player>, no location is available.",
+    "assassins.command.track.notSameWorld": "You are not in the same world as <player>.",
+    "assassins.command.track.help": "Points compass to player.",
+
+    // Assassin - Blitz
+    "assassins.command.blitz.activated": "Your blitz attack is now active for <time>.",
+    "assassins.command.blitz.deactivated": "Your blitz attack has expired !",
+    "assassins.command.blitz.notHunting": "You are not hunting <player>, so cannot use a blitz attack.",
+    "assassins.command.blitz.notWithinRange": "You are not close enough to <player> for a blitz attack.",
+    "assassins.command.blitz.onTimer": "Your blitz attack is currently on timer for another <time>.",
+    "assassins.command.blitz.help": "Blitz attack the player.",
+
     // Assassin - Contracts
     "assassins.command.contracts.header": "[Hunting Contracts]",
-    "assassins.command.contracts.footer": "Use &e/assassin view&a to view details of player contracts.",
+    "assassins.command.contracts.footerOne": "&cTime Remaining &7- &bHunted Player &7- &aLocation if online.",
+    "assassins.command.contracts.footerTwo": "&7Use &e/assassin view &7to view details of player contracts.",
     "assassins.command.contracts.none": "You have no contracts available.",
     "assassins.command.contracts.wrongPage": "That page does not exist.",
-    "assassins.command.contracts.help": "Displays all hunting contracts.",
+    "assassins.command.contracts.help": "Displays your hunting contracts.",
 
     // Assassin - Cancel
     "assassins.command.cancel.completed": "Contract against <player> has been cancelled.",
@@ -33,33 +60,35 @@
 
     // Assassin - Wanted
     "assassins.command.wanted.header": "[Assassin Contracts]",
-    "assassins.command.wanted.notAvailable": "Player is being hunted. &4[Assassin, Time Limit].",
-    "assassins.command.wanted.available": "Player is available to hunt.",
+    "assassins.command.wanted.notAvailable": "Time Remaining - # Contracts - Player being hunted.",
+    "assassins.command.wanted.available": "Time Remaining - # Contracts - Player available to hunt.",
     "assassins.command.wanted.none": "There are no contracts available.",
     "assassins.command.wanted.wrongPage": "That page does not exist.",
-    "assassins.command.wanted.help": "Displays all contracts.",
+    "assassins.command.wanted.help": "Displays all available contracts.",
 
     // Assassin - View
     "assassins.command.view.header": "[View Contracts]",
-    "assassins.command.view.footer": "<payment> Total payment for making the kill.",
     "assassins.command.view.wrongPage": "That page does not exist.",
     "assassins.command.view.none": "There are no contracts available.",
+    "assassins.command.view.footer": "&cTime Remaining &7- &ePayment &7- &bPlayer who created contract.",
     "assassins.command.view.help": "Displays contract details.",
 
     // Assassin - Expired
     "assassins.command.expired.header": "[Expired Contracts]",
-    "assassins.command.expired.footer": "<refund> refunded.",
     "assassins.command.expired.none": "There are no expired contracts.",
-    "assassins.command.expired.help": "Refunds expired contracts.",
+    "assassins.command.expired.help": "Refunds your expired contracts.",
 
     // Assassin - Kill Completed
-    "assassins.contract.assassin.completed": "You have killed <player> and earned <payment> !",
+    "assassins.contract.assassin.completed": "You have killed <player> and earned your payments !",
+    "assassins.contract.hunted.completed": "You were killed by an assassin !",
+    "assassins.contract.hunted.canRevenge": "&6Use &c/assassin revenge &6to get revenge on those contracts !",
+    "assassins.contract.hunted.cannotRevenge": "&6None of the contracts were allowed to have revenge on.",
     "assassins.contract.requestor.completed": "<player> has been killed by <assassin> !",
 
     // Assassin - Protection
     "assassins.protected.attacker": "Player is under protection and cannot be attacked.",
     "assassins.protected.damager": "You are under protection and cannot attack anyone.",
-    "assassins.command.protect.help": "Toggles a player protection state.",
+    "assassins.command.protect.help": "Toggle player protection state.",
     "assassins.command.protect.enabled": "<player> is now protected.",
     "assassins.command.protect.disabled": "<player> is no longer protected.",
 

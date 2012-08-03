@@ -23,7 +23,6 @@ public class ContractWantedItem {
 
     private int numberOfContracts;
     private String playerName;
-    private double totalPayment;
     private String hunterPlayerName;
     private long hunterTimeLimit;
     private long oldestExpiryDate;
@@ -42,14 +41,6 @@ public class ContractWantedItem {
 
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
-    }
-
-    public double getTotalPayment() {
-        return totalPayment;
-    }
-
-    public void setTotalPayment(double totalPayment) {
-        this.totalPayment = totalPayment;
     }
 
     public String getHunterPlayerName() {
@@ -76,14 +67,21 @@ public class ContractWantedItem {
         this.oldestExpiryDate = oldestExpiryDate;
     }
 
+    public long getOldestExpiryTimeRemaining() {
+        return getTimeRemaining(getOldestExpiryDate());
+    }
+
     public boolean isAvailable() {
         return !(getHunterTimeRemaining() > 0 && StringUtils.isNotBlank(hunterPlayerName));
     }
 
     public long getHunterTimeRemaining() {
+        return getTimeRemaining(getHunterTimeLimit());
+    }
+
+    private long getTimeRemaining(long expiryTime) {
 
         long currentTime = System.currentTimeMillis();
-        long expiryTime = getHunterTimeLimit();
         long remaining = expiryTime - currentTime;
         return remaining;
     }

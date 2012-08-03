@@ -1,6 +1,9 @@
 package com.netprogs.minecraft.plugins.assassins.storage.json;
 
-import com.netprogs.minecraft.plugins.assassins.config.JsonConfiguration;
+import com.google.gson.GsonBuilder;
+import com.netprogs.minecraft.plugins.assassins.io.JsonConfiguration;
+import com.netprogs.minecraft.plugins.assassins.io.JsonPaymentAdapter;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Storage;
 
 /*
@@ -28,5 +31,12 @@ public class JsonStorage extends JsonConfiguration<Storage> {
 
     public Storage getStorage() {
         return getDataObject();
+    }
+
+    @Override
+    protected void registerTypeAdapters(GsonBuilder builder) {
+
+        // register the Message interface
+        builder.registerTypeAdapter(Payment.class, new JsonPaymentAdapter()).create();
     }
 }

@@ -1,13 +1,7 @@
 package com.netprogs.minecraft.plugins.assassins.command;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.logging.Logger;
-
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
-import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
-import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -30,9 +24,7 @@ import org.bukkit.entity.Player;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-public abstract class PluginCommand<T extends IPluginSettings> implements IPluginCommand<T> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public abstract class PluginCommand implements IPluginCommand {
 
     // The command type is used for command and permissions
     private ICommandType commandType;
@@ -55,24 +47,11 @@ public abstract class PluginCommand<T extends IPluginSettings> implements IPlugi
 
     @Override
     public boolean hasCommandPermission(CommandSender sender) {
-        return VaultIntegration.getInstance().hasCommandPermission(sender, commandType);
+        return AssassinsPlugin.getVault().hasCommandPermission(sender, commandType);
     }
 
     @Override
     public ICommandType getCommandType() {
         return commandType;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public T getCommandSettings() {
-
-        // get the sub-class type
-        ParameterizedType genericSuperclass = (ParameterizedType) getClass().getGenericSuperclass();
-        Class<T> classObject = (Class<T>) genericSuperclass.getActualTypeArguments()[0];
-
-        // use that to obtain the settings for this instance
-        SettingsConfig settingsConfig = PluginConfig.getInstance().getConfig(SettingsConfig.class);
-        return (T) settingsConfig.getPluginSettings(classObject);
     }
 }

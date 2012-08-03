@@ -1,6 +1,6 @@
 package com.netprogs.minecraft.plugins.assassins.listener;
 
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -34,7 +34,7 @@ public class PlayerQuitListener implements Listener {
         if (event.getPlayer() instanceof Player) {
 
             // Remove them from the map in memory to save space
-            PluginStorage.getInstance().removePlayer(event.getPlayer());
+            AssassinsPlugin.getStorage().removePlayer(event.getPlayer());
         }
     }
 }

@@ -4,10 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
 
 import org.apache.commons.lang.StringUtils;
@@ -35,11 +34,9 @@ import org.bukkit.entity.Player;
 
 public class MessageUtil {
 
-    private static final Logger logger = Logger.getLogger("Minecraft");
-
     public static void sendHeaderMessage(CommandSender receiver, String resource, int pageNumber, int maxPages) {
 
-        ResourcesConfig resources = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig resources = AssassinsPlugin.getResources();
 
         ChatColor SPACER_COLOR = ChatColor.GOLD;
         ChatColor TITLE_COLOR = ChatColor.GOLD;
@@ -47,7 +44,7 @@ public class MessageUtil {
         // create our header
         String title = resources.getResource(resource);
         if (title == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 
@@ -84,7 +81,7 @@ public class MessageUtil {
         // // create our header
         // String title = resources.getResource(resource);
         // if (title == null) {
-        // logger.log(Level.SEVERE, "Could not find resource: " + resource);
+        // AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
         // return;
         // }
         //
@@ -107,14 +104,14 @@ public class MessageUtil {
 
     public static void sendFooterMessage(CommandSender receiver, String resource) {
 
-        ResourcesConfig resources = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig resources = AssassinsPlugin.getResources();
 
         ChatColor FOOTER_COLOR = ChatColor.DARK_GRAY;
 
         // create our header
         String footer = resources.getResource(resource);
         if (footer == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 
@@ -142,11 +139,23 @@ public class MessageUtil {
         }
     }
 
+    public static void sendMessage(CommandSender receiver, String resource) {
+
+        String requestSenderMessage = AssassinsPlugin.getResources().getResource(resource);
+        if (requestSenderMessage == null) {
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
+            return;
+        }
+
+        requestSenderMessage = requestSenderMessage.replaceAll("(&([A-Fa-f0-9L-Ol-o]))", "\u00A7$2");
+        receiver.sendMessage(requestSenderMessage);
+    }
+
     public static void sendMessage(CommandSender receiver, String resource, ChatColor baseColor) {
 
-        String requestSenderMessage = PluginConfig.getInstance().getConfig(ResourcesConfig.class).getResource(resource);
+        String requestSenderMessage = AssassinsPlugin.getResources().getResource(resource);
         if (requestSenderMessage == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 
@@ -157,9 +166,9 @@ public class MessageUtil {
     public static void sendMessage(CommandSender receiver, String resource, ChatColor baseColor,
             MessageParameter messageVariable) {
 
-        String requestSenderMessage = PluginConfig.getInstance().getConfig(ResourcesConfig.class).getResource(resource);
+        String requestSenderMessage = AssassinsPlugin.getResources().getResource(resource);
         if (requestSenderMessage == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 
@@ -175,9 +184,9 @@ public class MessageUtil {
     public static void sendMessage(CommandSender receiver, String resource, ChatColor baseColor,
             List<MessageParameter> messageVariables) {
 
-        String requestSenderMessage = PluginConfig.getInstance().getConfig(ResourcesConfig.class).getResource(resource);
+        String requestSenderMessage = AssassinsPlugin.getResources().getResource(resource);
         if (requestSenderMessage == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 
@@ -194,9 +203,9 @@ public class MessageUtil {
 
     public static void sendGlobalMessage(String resource, ChatColor baseColor, List<MessageParameter> messageVariables) {
 
-        String requestSenderMessage = PluginConfig.getInstance().getConfig(ResourcesConfig.class).getResource(resource);
+        String requestSenderMessage = AssassinsPlugin.getResources().getResource(resource);
         if (requestSenderMessage == null) {
-            logger.log(Level.SEVERE, "Could not find resource: " + resource);
+            AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
             return;
         }
 

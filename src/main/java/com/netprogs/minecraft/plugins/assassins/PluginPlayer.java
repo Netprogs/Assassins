@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.netprogs.minecraft.plugins.assassins.command.ICommandType;
 import com.netprogs.minecraft.plugins.assassins.command.IWaitData;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
 
 import org.bukkit.entity.Player;
@@ -42,6 +41,8 @@ public class PluginPlayer {
     private ICommandType waitCommand;
     private WaitState waitState;
     private IWaitData waitData;
+
+    private boolean blitzActive;
 
     // Map<PlayerName, PlayerContracts>
     private Map<String, PlayerContracts> playerContracts = new HashMap<String, PlayerContracts>();
@@ -85,10 +86,13 @@ public class PluginPlayer {
     public PlayerContracts getPlayerContracts(String playerName) {
 
         // only return the object if it hasn't expired yet
-        PlayerContracts contracts = playerContracts.get(playerName);
+        PlayerContracts contracts = playerContracts.get(playerName.toLowerCase());
         if (contracts != null && contracts.getAssassinTimeRemaining() > 0) {
             return contracts;
         }
+
+        // the assassin time limit is up, remove the contracts for this player
+        playerContracts.remove(playerName.toLowerCase());
 
         return null;
     }
@@ -127,26 +131,31 @@ public class PluginPlayer {
     public void addPlayerContracts(String playerName, PlayerContracts playerContacts) {
 
         // if new one's are added later, they're still added to the PlayerContracts object so we'll have them
-        playerContracts.put(playerName, playerContacts);
+        playerContracts.put(playerName.toLowerCase(), playerContacts);
     }
 
     public void removeContracts(String playerName) {
 
         // remove from our list
-        playerContracts.remove(playerName);
-
-        // remove from the data source
-        PluginStorage.getInstance().removePlayerContracts(playerName);
+        playerContracts.remove(playerName.toLowerCase());
     }
 
     private void loadContracts() {
 
         if (playerContracts.isEmpty()) {
-            playerContracts = PluginStorage.getInstance().getHunterContracts(player.getName());
+            playerContracts = AssassinsPlugin.getStorage().getHunterContracts(player.getName());
         }
     }
 
     public boolean isProtectedPlayer() {
-        return PluginStorage.getInstance().isProtectedPlayer(player.getName());
+        return AssassinsPlugin.getStorage().isProtectedPlayer(player.getName());
+    }
+
+    public boolean isBlitzActive() {
+        return blitzActive;
+    }
+
+    public void setBlitzActive(boolean blitzActive) {
+        this.blitzActive = blitzActive;
     }
 }

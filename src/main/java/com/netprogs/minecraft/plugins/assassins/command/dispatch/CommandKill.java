@@ -1,28 +1,29 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
+import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
-import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -44,13 +45,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Command: /assassins kill <player> <amount> [reason]
+ * Command: /assassins kill <player> <count>:<item> [reason]
  * player - The name of the player to be killed.
  * amount - The amount your paying to have them killed.
  * reason - [optional] If you want to state why you want them killed.
  */
-public class CommandKill extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandKill extends PluginCommand {
 
     public CommandKill() {
         super(PluginCommandType.kill);
@@ -58,7 +58,8 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
 
     @Override
     public boolean run(JavaPlugin plugin, CommandSender sender, List<String> arguments)
-            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException {
+            throws ArgumentsMissingException, InvalidPermissionsException, PlayerNotFoundException,
+            SenderNotPlayerException {
 
         // check permissions
         if (!hasCommandPermission(sender)) {
@@ -70,21 +71,22 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
             throw new ArgumentsMissingException();
         }
 
-        // verify the player
+        // verify that the sender is actually a player
+        if (!(sender instanceof Player)) {
+            throw new SenderNotPlayerException();
+        }
+
+        Player player = (Player) sender;
+
+        // verify the player being contracted against
         String tempPlayerName = arguments.remove(0);
         String huntedPlayerName = PlayerUtil.getPlayerName(tempPlayerName);
         if (huntedPlayerName == null) {
             throw new PlayerNotFoundException(tempPlayerName);
         }
 
-        // get the payment
-        double payment = 0;
-        try {
-            payment = Integer.valueOf(Integer.parseInt(arguments.remove(0)));
-        } catch (Exception e) {
-            MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment", ChatColor.RED);
-            return false;
-        }
+        // get the payment, we'll process this later
+        String paymentArgument = arguments.remove(0);
 
         // check to see if there is a reason
         String reason = "";
@@ -93,8 +95,8 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
         }
 
         // check to see if they've reached their limit on number of contracts
-        int maxNumContracts = PluginConfig.getInstance().getConfig(SettingsConfig.class).getMaximumContracts();
-        PlayerContracts playerContracts = PluginStorage.getInstance().getPlayerContracts(huntedPlayerName);
+        int maxNumContracts = AssassinsPlugin.getSettings().getMaximumContracts();
+        PlayerContracts playerContracts = AssassinsPlugin.getStorage().getPlayerContracts(huntedPlayerName);
         if (playerContracts != null && maxNumContracts > 0 && playerContracts.getContracts().size() >= maxNumContracts) {
 
             MessageUtil.sendMessage(sender, "assassins.command.kill.maxContracts", ChatColor.RED, new MessageParameter(
@@ -104,7 +106,7 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
         }
 
         // check to see if they are under protection
-        if (PluginStorage.getInstance().isProtectedPlayer(huntedPlayerName)) {
+        if (AssassinsPlugin.getStorage().isProtectedPlayer(huntedPlayerName)) {
 
             MessageUtil.sendMessage(sender, "assassins.command.kill.protectedPlayer", ChatColor.RED,
                     new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
@@ -119,18 +121,102 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
             return false;
         }
 
-        // try to take their money, if they don't have enough, don't continue
-        boolean completed = VaultIntegration.getInstance().withdrawContractPayment(sender.getName(), payment);
-        if (!completed) {
-
-            MessageUtil.sendMessage(sender, "assassins.command.kill.notEnoughFunds", ChatColor.RED,
-                    new MessageParameter("<price>", Double.toString(payment), ChatColor.YELLOW));
+        // check to see if they already have a contract out on the person
+        if (AssassinsPlugin.getStorage().alreadyHasContractOn(sender.getName(), huntedPlayerName)) {
+            MessageUtil.sendMessage(sender, "assassins.command.kill.alreadyHasContract", ChatColor.RED);
             return false;
+        }
+
+        // process the payment parameter now and handle it accordingly
+        Payment payment = new Payment();
+        if (paymentArgument.contains(":")) {
+
+            // if it contains a ":" that means they're attempting to use an item as payment
+            String[] pieces = paymentArgument.split(":");
+            if (pieces.length != 2) {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment", ChatColor.RED);
+                return false;
+            }
+
+            // get the item count
+            int itemCount = 0;
+            try {
+                itemCount = Integer.valueOf(Integer.parseInt(pieces[0]));
+            } catch (Exception e) {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment.count", ChatColor.RED);
+                return false;
+            }
+
+            // get the material
+            Material material = Material.matchMaterial(pieces[1]);
+            if (material == null) {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment.material", ChatColor.RED);
+                return false;
+            }
+
+            // Take the item from their inventory. If they cancel the contract later, we'll return the items then.
+            PlayerInventory inventory = player.getInventory();
+            if (inventory.contains(material, itemCount)) {
+
+                // create an item stack from the given values and remove it from the inventory
+                ItemStack itemStack = new ItemStack(material, itemCount);
+                inventory.removeItem(itemStack);
+
+            } else {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment.stack", ChatColor.RED);
+                return false;
+            }
+
+            // set the type and amount
+            payment.setPaymentType(Payment.Type.item);
+            payment.setItemCount(itemCount);
+            payment.setItemId(material.getId());
+
+        } else if (paymentArgument.equalsIgnoreCase("hand")) {
+
+            // Take the item from their inventory. If they cancel the contract later, we'll return the items then.
+            ItemStack handItemStack = player.getItemInHand();
+            if (handItemStack.getAmount() == 0) {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment.count", ChatColor.RED);
+                return false;
+            }
+
+            PlayerInventory inventory = player.getInventory();
+            inventory.removeItem(handItemStack);
+
+            // set the type and amount
+            payment.setPaymentType(Payment.Type.item);
+            payment.setItemCount(handItemStack.getAmount());
+            payment.setItemId(handItemStack.getTypeId());
+
+        } else {
+
+            // otherwise process a cash payment
+            double cashAmount = 0;
+            try {
+                cashAmount = Double.valueOf(Double.parseDouble(paymentArgument));
+            } catch (Exception e) {
+                MessageUtil.sendMessage(sender, "assassins.command.kill.invalidPayment.cash", ChatColor.RED);
+                return false;
+            }
+
+            // try to take their money, if they don't have enough, don't continue
+            boolean completed = AssassinsPlugin.getVault().withdrawContractPayment(sender.getName(), cashAmount);
+            if (!completed) {
+
+                MessageUtil.sendMessage(sender, "assassins.command.kill.notEnoughFunds", ChatColor.RED,
+                        new MessageParameter("<price>", Double.toString(cashAmount), ChatColor.YELLOW));
+                return false;
+            }
+
+            // set the type and amounts
+            payment.setPaymentType(Payment.Type.cash);
+            payment.setCashAmount(cashAmount);
         }
 
         // finally, add them to the list
         boolean contractSubmitted =
-                PluginStorage.getInstance().createContract(sender.getName(), huntedPlayerName, payment, reason);
+                AssassinsPlugin.getStorage().createContract(sender.getName(), huntedPlayerName, payment, reason);
 
         if (contractSubmitted) {
 
@@ -148,15 +234,27 @@ public class CommandKill extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
-        HelpMessage mainCommand = new HelpMessage();
-        mainCommand.setCommand(getCommandType().toString());
-        mainCommand.setArguments("<player> <amount> [reason]");
-        mainCommand.setDescription(config.getResource("assassins.command.kill.help"));
+        HelpMessage cashCommand = new HelpMessage();
+        cashCommand.setCommand(getCommandType().toString());
+        cashCommand.setArguments("<player> <amount> [reason]");
+        cashCommand.setDescription(config.getResource("assassins.command.kill.help"));
+
+        HelpMessage itemCommand = new HelpMessage();
+        itemCommand.setCommand(getCommandType().toString());
+        itemCommand.setArguments("<player> <count:item> [reason]");
+        itemCommand.setDescription(config.getResource("assassins.command.kill.help"));
+
+        HelpMessage handCommand = new HelpMessage();
+        handCommand.setCommand(getCommandType().toString());
+        handCommand.setArguments("<player> hand [reason]");
+        handCommand.setDescription(config.getResource("assassins.command.kill.help"));
 
         HelpSegment helpSegment = new HelpSegment(getCommandType());
-        helpSegment.addEntry(mainCommand);
+        helpSegment.addEntry(cashCommand);
+        helpSegment.addEntry(itemCommand);
+        helpSegment.addEntry(handCommand);
 
         return helpSegment;
     }

@@ -7,7 +7,6 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermiss
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotOnlineException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
 
 import org.bukkit.command.CommandSender;
@@ -30,7 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-public interface IPluginCommand<T extends IPluginSettings> {
+public interface IPluginCommand {
 
     /**
      * Executes the command.
@@ -59,12 +58,6 @@ public interface IPluginCommand<T extends IPluginSettings> {
      * @return The command type.
      */
     public ICommandType getCommandType();
-
-    /**
-     * The command settings instance to hold configuration information for the command.
-     * @return The command settings instance.
-     */
-    public T getCommandSettings();
 
     /**
      * Produces a {@link Help} instance containing the details of the command.

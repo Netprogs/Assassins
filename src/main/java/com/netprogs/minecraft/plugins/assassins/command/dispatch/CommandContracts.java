@@ -1,8 +1,8 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
@@ -11,16 +11,16 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlaye
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList.PagedItems;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
+import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
 
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -46,9 +46,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins contracts [1+]
  * Displays all the hunting contracts of the player.
  */
-public class CommandContracts extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandContracts extends PluginCommand {
 
     public CommandContracts() {
         super(PluginCommandType.contracts);
@@ -87,7 +85,7 @@ public class CommandContracts extends PluginCommand<IPluginSettings> {
         Player player = (Player) sender;
 
         // get the list of contracts for the player
-        List<PlayerContracts> contracts = PluginStorage.getInstance().getPlayer(player).getSortedContracts();
+        List<PlayerContracts> contracts = AssassinsPlugin.getStorage().getPlayer(player).getSortedContracts();
         PagedItems<PlayerContracts> pagedItems = PagedList.getPagedList(contracts, pageNumber, 10);
         if (pagedItems.items == null) {
 
@@ -106,9 +104,20 @@ public class CommandContracts extends PluginCommand<IPluginSettings> {
         // grab the sub list for displaying
         for (PlayerContracts playerContract : pagedItems.items) {
 
-            sender.sendMessage("" + ChatColor.YELLOW + playerContract.getTotalPayment() + " " + ChatColor.RED
-                    + MessageUtil.formatTime(playerContract.getAssassinTimeRemaining()) + " " + ChatColor.AQUA
-                    + playerContract.getPlayerName());
+            String location = "";
+            Player huntedPlayer = Bukkit.getPlayer(playerContract.getPlayerName());
+            if (huntedPlayer != null) {
+
+                // get the location of the player using the adjustment value
+                int adjustment = AssassinsPlugin.getSettings().getLocationTrackingAdjustment();
+                Location huntedPlayerLocation = PlayerUtil.getEstimatedLocation(huntedPlayer.getLocation(), adjustment);
+                location =
+                        ChatColor.GREEN + " (" + huntedPlayerLocation.getBlockX() + ", "
+                                + huntedPlayerLocation.getBlockZ() + ")";
+            }
+
+            sender.sendMessage(ChatColor.RED + MessageUtil.formatTime(playerContract.getAssassinTimeRemaining()) + " "
+                    + ChatColor.AQUA + playerContract.getPlayerName() + location);
         }
 
         if (pagedItems.items.size() == 0) {
@@ -120,7 +129,9 @@ public class CommandContracts extends PluginCommand<IPluginSettings> {
             // send a footer saying use /assassin view <player> to see the details of the contract
             String footerSpacer = StringUtils.repeat("-", 52);
             sender.sendMessage(ChatColor.GOLD + footerSpacer);
-            MessageUtil.sendMessage(sender, "assassins.command.contracts.footer", ChatColor.GREEN);
+
+            MessageUtil.sendMessage(sender, "assassins.command.contracts.footerOne");
+            MessageUtil.sendMessage(sender, "assassins.command.contracts.footerTwo");
         }
 
         return true;
@@ -129,7 +140,7 @@ public class CommandContracts extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

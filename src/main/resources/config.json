@@ -1,4 +1,7 @@
 {
+  // If you want to turn on debugging, set this to true.
+  "loggingDebug": false,
+
   // The maximum number of contracts a single player can have on them. -1 for unlimited.
   "maximumContracts": -1,
 
@@ -7,7 +10,131 @@
 
   // The amount of time (in minutes) an assassin has to kill the player before the contract goes back to the wanted list.
   "assassinExpireTime": 60,
+  
+  // The distance (in blocks) to round to for giving "estimated" location of a player being hunted.
+  "locationTrackingAdjustment": 50,
+  
+  // This defines the benefits a player will get when using a blitz attack
+  "blitz": {
+    
+    // The duration for how long blitz will last. (seconds)
+    "duration": 10,
+    
+    // The cool down period that must pass before they can use it again. (seconds)
+    "cooldown": 180,
+    
+    // The number of blocks the player must be within of their prey in order to activate a blitz attack
+    "proximity": 10,
+    
+    // If you want to allow better compass tracking during blitz, set it here. 0 means exact location.
+    "locationTrackingAdjustment": 0,
+    
+    // BENEFIT:
+    // If you want to allow them to turn invisible to the player they've chosen to blitz against.
+    "allowInvisible": true,
+    
+    // BENEFIT: (PotionEffectType.SPEED with 1 amplifier)
+    // If you want to allow them to have a faster movement speed.
+    "allowSpeed": true,
+    
+    // BENEFIT: (PotionEffectType.JUMP with 1 amplifier)
+    // If you want to allow them to have a higher jump.
+    "allowJump": true,
+    
+    // SIDE EFFECT: (PotionEffectType.SLOW with 1 amplifier)
+    // If you want to allow them to have the side effect of slowness applied.
+    "allowSlow": true,
+    
+    // SIDE EFFECT: (PotionEffectType.BLINDESS with 1 amplifier)
+    // If you want to allow them to have the side effect of blindness applied.
+    "allowBlindness": true,
+    
+    // SIDE EFFECT: (PotionEffectType.CONFUSION with 1 amplifier)
+    // If you want to allow them to have the side effect of confusion applied.
+    "allowConfusion": true
+  },
 
-  // If you want to turn on debugging, set this to true
-  "loggingDebug": false
+  // Auto contracts allow the plug-in to place contracts randomly onto players when they log in. 
+  "autoContractor": {
+
+    // This allows you to disable the feature entirely. 
+    // You can also just remove this entire section from the configuration.
+    "enabled": false,
+
+    // The maximum number of auto contracts allowed to be listed at once.
+    // When the total number of auto contracts is reached, no new contracts 
+    // will be added until they expire or are completed.
+    "maximumContracts": 5,
+
+    //
+    // This is the list of contracts you wish to have people checked against upon login.
+    //
+    // The order here does not matter. When the contracts are checked, they are sorted by chance.
+    // Lowest chance gets checked first. 
+    // The search stops on the first contract that falls within the players chance calculated upon login.
+    //
+    // It's suggested to not have contracts with the same chance as there is no guarantee which one would be used first.
+    // 
+    "contracts": [
+
+      // This defines a 10% chance of a contract being placed on them for $1000.      
+      {
+        //
+        // The percent chance of someone having a contract placed on them when logging in.
+        //
+        // Examples:
+        //
+        // 0 - No chance. Turns off this contract. Negative numbers will be treated as 0.
+        // 50 - 50% chance of them being listed
+        // 100 - 100% meaning every time they log in they'll get listed.
+        //
+        
+        // Give this auto-contract a 10 percent chance to be placed on a player.
+        "chance": 10,
+
+        //
+        // The payment the assassin will receive when killing a contracted player.
+        //
+        // A cash payment should look like this the following: "AMOUNT". Must be a string.
+        // AMOUNT = The cash amount you want as the payment.
+        //
+        // For example:
+        //
+        // "payment": "1000"
+        //
+        // An item payment should look like this the following "COUNT:ID". Must be a string.
+        // COUNT = The number of the item you want as the payment.
+        // ID = The ID of the Minecraft Material you want as the payment.
+        //
+        // For example:
+        //
+        // "payment": "1:56"
+        //
+        
+        // Give the assassin 1000 dollars for completing the contract.
+        "payment": "1000",
+
+        // The name to use for this contract. 
+        // This is just for visual, does not need to be a real player name. Cannot be blank.
+        "name": "AutoContract",
+
+        // The reason attached to the auto contract. Can be empty.
+        "reason": "Contract Reason"
+      },
+      // This defines a 50% chance of a contract being placed on them for $100.
+      {
+        "chance": 50,
+        "payment": "100",
+        "name": "AutoContract",
+        "reason": "Contract Reason"
+      },
+      // This defines a 1% chance of a contract being placed on them for 1 Diamond Ore (ID 56).
+      {
+        "chance": 1,
+        "payment": "1:56",
+        "name": "AutoContract",
+        "reason": "Contract Reason"
+      }
+    ]
+  }
 }

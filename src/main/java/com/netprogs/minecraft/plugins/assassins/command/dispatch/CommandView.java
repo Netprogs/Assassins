@@ -1,28 +1,26 @@
 package com.netprogs.minecraft.plugins.assassins.command.dispatch;
 
 import java.util.List;
-import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommand;
 import com.netprogs.minecraft.plugins.assassins.command.PluginCommandType;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.InvalidPermissionsException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFoundException;
-import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList;
-import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PagedList.PagedItems;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
+import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
 import com.netprogs.minecraft.plugins.assassins.help.HelpSegment;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Contract;
+import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -47,9 +45,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Command: /assassins view <player> [1+]
  * Displays all the available contracts for a specific person.
  */
-public class CommandView extends PluginCommand<IPluginSettings> {
-
-    private final Logger logger = Logger.getLogger("Minecraft");
+public class CommandView extends PluginCommand {
 
     public CommandView() {
         super(PluginCommandType.view);
@@ -87,7 +83,7 @@ public class CommandView extends PluginCommand<IPluginSettings> {
         }
 
         // get the list of contracts for the player
-        List<Contract> contracts = PluginStorage.getInstance().getContracts(huntedPlayerName);
+        List<Contract> contracts = AssassinsPlugin.getStorage().getContracts(huntedPlayerName);
         PagedItems<Contract> pagedItems = PagedList.getPagedList(contracts, pageNumber, 5);
         if (pagedItems.items == null) {
             MessageUtil.sendHeaderMessage(sender, "assassins.command.view.header", pageNumber, pagedItems.numFullPages);
@@ -98,20 +94,23 @@ public class CommandView extends PluginCommand<IPluginSettings> {
         // display the header
         MessageUtil.sendHeaderMessage(sender, "assassins.command.view.header", pageNumber, pagedItems.numFullPages);
 
-        // grab the sub list for displaying
-        String priceSpacer = StringUtils.repeat(" ", 10);
-        double totalPayment = 0;
-
+        // display the contracts
         for (Contract contract : pagedItems.items) {
 
-            totalPayment += contract.getPayment();
+            String payment = "";
 
-            String payment = Double.toString(contract.getPayment());
-            String paymentSpacer = priceSpacer.substring(payment.length());
+            if (contract.getPayment().getPaymentType() == Payment.Type.cash) {
 
-            sender.sendMessage("" + ChatColor.YELLOW + contract.getPayment() + paymentSpacer + " " + ChatColor.RED
-                    + MessageUtil.formatTime(contract.getTimeRemaining()) + " " + ChatColor.AQUA
-                    + contract.getRequestPlayerName());
+                payment = Double.toString(contract.getPayment().getCashAmount());
+
+            } else if (contract.getPayment().getPaymentType() == Payment.Type.item) {
+
+                Material material = Material.getMaterial(contract.getPayment().getItemId());
+                payment = contract.getPayment().getItemCount() + " " + material.name();
+            }
+
+            sender.sendMessage(ChatColor.RED + MessageUtil.formatTime(contract.getTimeRemaining()) + " "
+                    + ChatColor.YELLOW + payment + " " + ChatColor.AQUA + contract.getRequestPlayerName());
 
             if (StringUtils.isNotBlank(contract.getReason())) {
                 sender.sendMessage("" + ChatColor.WHITE + contract.getReason() + " ");
@@ -127,8 +126,8 @@ public class CommandView extends PluginCommand<IPluginSettings> {
             String footerSpacer = StringUtils.repeat("-", 52);
             sender.sendMessage(ChatColor.GOLD + footerSpacer);
 
-            MessageUtil.sendMessage(sender, "assassins.command.view.footer", ChatColor.GREEN, new MessageParameter(
-                    "<payment>", Double.toString(totalPayment), ChatColor.YELLOW));
+            // When the hunters time runs out, goes back to being available.
+            MessageUtil.sendMessage(sender, "assassins.command.view.footer", ChatColor.GREEN);
         }
 
         return true;
@@ -137,7 +136,7 @@ public class CommandView extends PluginCommand<IPluginSettings> {
     @Override
     public HelpSegment help() {
 
-        ResourcesConfig config = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
+        ResourcesConfig config = AssassinsPlugin.getResources();
 
         HelpMessage mainCommand = new HelpMessage();
         mainCommand.setCommand(getCommandType().toString());

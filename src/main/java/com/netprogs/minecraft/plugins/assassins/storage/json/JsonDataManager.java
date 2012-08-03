@@ -35,16 +35,16 @@ public class JsonDataManager {
     }
 
     public boolean isProtectedPlayer(String playerName) {
-        return storage.getStorage().getProtectedPlayers().contains(playerName);
+        return storage.getStorage().getProtectedPlayers().contains(playerName.toLowerCase());
     }
 
     public void addProtectedPlayer(String playerName) {
-        storage.getStorage().getProtectedPlayers().add(playerName);
+        storage.getStorage().getProtectedPlayers().add(playerName.toLowerCase());
         storage.saveConfig();
     }
 
     public void removeProtectedPlayer(String playerName) {
-        storage.getStorage().getProtectedPlayers().remove(playerName);
+        storage.getStorage().getProtectedPlayers().remove(playerName.toLowerCase());
         storage.saveConfig();
     }
 
@@ -57,19 +57,19 @@ public class JsonDataManager {
     }
 
     public PlayerContracts getPlayerContracts(String playerName) {
-        return storage.getStorage().getPlayerContracts().get(playerName);
+        return storage.getStorage().getPlayerContracts().get(playerName.toLowerCase());
     }
 
     public void removePlayerContracts(String playerName) {
-        storage.getStorage().getPlayerContracts().remove(playerName);
+        storage.getStorage().getPlayerContracts().remove(playerName.toLowerCase());
         storage.saveConfig();
     }
 
     public boolean alreadyHasContractOn(String requestPlayerName, String playerName) {
 
-        if (storage.getStorage().getPlayerContracts().containsKey(playerName)) {
+        if (storage.getStorage().getPlayerContracts().containsKey(playerName.toLowerCase())) {
 
-            PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName);
+            PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName.toLowerCase());
             for (Contract contract : playerContracts.getContracts()) {
                 if (contract.getRequestPlayerName().equalsIgnoreCase(requestPlayerName)) {
                     return true;
@@ -83,15 +83,15 @@ public class JsonDataManager {
     public void addContract(String playerName, Contract contract) {
 
         // if there is no list for the player yet, add an empty one now
-        if (!storage.getStorage().getPlayerContracts().containsKey(playerName)) {
+        if (!storage.getStorage().getPlayerContracts().containsKey(playerName.toLowerCase())) {
 
             PlayerContracts playerContracts = new PlayerContracts();
             playerContracts.setPlayerName(playerName);
-            storage.getStorage().getPlayerContracts().put(playerName, playerContracts);
+            storage.getStorage().getPlayerContracts().put(playerName.toLowerCase(), playerContracts);
         }
 
         // add the contract to their list
-        PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName);
+        PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName.toLowerCase());
         playerContracts.getContracts().add(contract);
         storage.saveConfig();
     }
@@ -99,12 +99,12 @@ public class JsonDataManager {
     public void removeContract(String playerName, Contract contract) {
 
         // removes the contract for the player
-        PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName);
+        PlayerContracts playerContracts = storage.getStorage().getPlayerContracts().get(playerName.toLowerCase());
         playerContracts.getContracts().remove(contract);
 
         // if the last one, remove the list
         if (playerContracts.getContracts().size() == 0) {
-            storage.getStorage().getPlayerContracts().remove(playerName);
+            storage.getStorage().getPlayerContracts().remove(playerName.toLowerCase());
         }
 
         storage.saveConfig();

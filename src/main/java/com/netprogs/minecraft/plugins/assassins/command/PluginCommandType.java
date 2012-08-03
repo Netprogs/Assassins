@@ -19,7 +19,7 @@ package com.netprogs.minecraft.plugins.assassins.command;
 
 public enum PluginCommandType implements ICommandType {
 
-    help, kill, cancel, wanted, view, hunt, expired, contracts, protect;
+    help, kill, cancel, wanted, view, track, hunt, expired, contracts, protect, revenge, blitz;
 
     public static boolean contains(String type) {
         PluginCommandType[] values = PluginCommandType.values();

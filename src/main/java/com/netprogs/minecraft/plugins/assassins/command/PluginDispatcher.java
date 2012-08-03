@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer.WaitState;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandCancel;
@@ -33,6 +34,9 @@ import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandHelp;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandHunt;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandKill;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandProtect;
+import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandRevenge;
+import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandBlitz;
+import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandTrack;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandView;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandWanted;
 import com.netprogs.minecraft.plugins.assassins.command.exception.ArgumentsMissingException;
@@ -41,12 +45,8 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotFound
 import com.netprogs.minecraft.plugins.assassins.command.exception.PlayerNotOnlineException;
 import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlayerException;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
-import com.netprogs.minecraft.plugins.assassins.config.PluginConfig;
-import com.netprogs.minecraft.plugins.assassins.config.settings.IPluginSettings;
-import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
 import com.netprogs.minecraft.plugins.assassins.help.HelpBook;
 import com.netprogs.minecraft.plugins.assassins.help.HelpPage;
-import com.netprogs.minecraft.plugins.assassins.storage.PluginStorage;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -61,10 +61,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class PluginDispatcher implements CommandExecutor {
 
-    private final Logger logger = Logger.getLogger("Minecraft");
-
-    private final Map<ICommandType, IPluginCommand<? extends IPluginSettings>> commands =
-            new HashMap<ICommandType, IPluginCommand<? extends IPluginSettings>>();
+    private final Map<ICommandType, IPluginCommand> commands = new HashMap<ICommandType, IPluginCommand>();
 
     private JavaPlugin plugin;
 
@@ -78,13 +75,13 @@ public class PluginDispatcher implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] arguments) {
 
         // first thing we want to do is check for who's sending this request
-        if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
+        if (AssassinsPlugin.getSettings().isLoggingDebug()) {
             StringWriter argumentList = new StringWriter();
             for (String argument : arguments) {
                 argumentList.append(argument);
                 argumentList.append(" ");
             }
-            logger.info("Incoming command: " + argumentList.toString());
+            AssassinsPlugin.logger().info("Incoming command: " + argumentList.toString());
         }
 
         try {
@@ -102,7 +99,7 @@ public class PluginDispatcher implements CommandExecutor {
 
             if (requestedCommand == null) {
                 MessageUtil.sendMessage(sender, "plugin.error.unknownArguments", ChatColor.RED);
-                return true;
+                return false;
             }
 
             // put the rest into a list
@@ -116,13 +113,13 @@ public class PluginDispatcher implements CommandExecutor {
             if (!processRequest) {
 
                 // the user sent a command we're not waiting on, so cancel the command
-                return true;
+                return false;
             }
 
             // process the rest of the commands
             if (commands.containsKey(requestedCommand)) {
 
-                IPluginCommand<? extends IPluginSettings> pluginCommand = commands.get(requestedCommand);
+                IPluginCommand pluginCommand = commands.get(requestedCommand);
 
                 // try to run the command
                 try {
@@ -168,7 +165,7 @@ public class PluginDispatcher implements CommandExecutor {
             MessageUtil.sendMessage(sender, "plugin.error.unknownArguments", ChatColor.RED);
         }
 
-        return true;
+        return false;
     }
 
     private void createCommandMap() {
@@ -194,6 +191,15 @@ public class PluginDispatcher implements CommandExecutor {
         CommandHunt hunt = new CommandHunt();
         commands.put(PluginCommandType.hunt, hunt);
 
+        CommandTrack track = new CommandTrack();
+        commands.put(PluginCommandType.track, track);
+
+        CommandBlitz blitz = new CommandBlitz();
+        commands.put(PluginCommandType.blitz, blitz);
+
+        CommandRevenge revenge = new CommandRevenge();
+        commands.put(PluginCommandType.revenge, revenge);
+
         CommandContracts contracts = new CommandContracts();
         commands.put(PluginCommandType.contracts, contracts);
 
@@ -206,19 +212,24 @@ public class PluginDispatcher implements CommandExecutor {
 
         HelpPage baseHelpPage = new HelpPage();
         baseHelpPage.addSegment(help.help());
-        baseHelpPage.addSegment(kill.help());
-        baseHelpPage.addSegment(cancel.help());
-        baseHelpPage.addSegment(expired.help());
         baseHelpPage.addSegment(wanted.help());
+        baseHelpPage.addSegment(kill.help());
+        baseHelpPage.addSegment(revenge.help());
         baseHelpPage.addSegment(view.help());
         baseHelpPage.addSegment(hunt.help());
+        baseHelpPage.addSegment(track.help());
+        baseHelpPage.addSegment(blitz.help());
         baseHelpPage.addSegment(contracts.help());
+        baseHelpPage.addSegment(cancel.help());
+        baseHelpPage.addSegment(expired.help());
         baseHelpPage.addSegment(protect.help());
 
         HelpBook.addPage(baseHelpPage);
     }
 
     private boolean processWaitCommand(CommandSender sender, ICommandType requestedCommand) {
+
+        Logger logger = AssassinsPlugin.logger();
 
         // first we want to check to see if we need to process any waiting commands
         // if the user is in a waiting state, they cannot do any other commands until they respond
@@ -228,25 +239,25 @@ public class PluginDispatcher implements CommandExecutor {
             Player player = (Player) sender;
 
             // if the user is in a waiting state, then check to see if this requested command will handle it
-            PluginPlayer pluginPlayer = PluginStorage.getInstance().getPlayer(player);
+            PluginPlayer pluginPlayer = AssassinsPlugin.getStorage().getPlayer(player);
             if (pluginPlayer != null && pluginPlayer.getWaitState() != null
                     && pluginPlayer.getWaitState() != WaitState.notWaiting) {
 
-                if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
+                if (AssassinsPlugin.getSettings().isLoggingDebug()) {
                     logger.info("WaitState: " + pluginPlayer.getWaitState());
                     logger.info("WaitCommand: " + pluginPlayer.getWaitCommand());
                     logger.info("Requested Command: " + requestedCommand);
                 }
 
                 // get the command that is being requested and check to see if it is a wait command
-                IPluginCommand<? extends IPluginSettings> pluginCommand = commands.get(requestedCommand);
+                IPluginCommand pluginCommand = commands.get(requestedCommand);
                 if (pluginCommand instanceof IWaitCommand) {
 
                     // we got a wait command, so now let's check to see if it wants to handle the command
                     boolean isValidWaitResponse =
                             ((IWaitCommand) pluginCommand).isValidWaitReponse(sender, pluginPlayer);
 
-                    if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
+                    if (AssassinsPlugin.getSettings().isLoggingDebug()) {
                         logger.info("Requested command is an IWaitCommand");
                         logger.info("isValidWaitResponse: " + isValidWaitResponse);
                     }
@@ -255,7 +266,7 @@ public class PluginDispatcher implements CommandExecutor {
 
                 } else {
 
-                    if (PluginConfig.getInstance().getConfig(SettingsConfig.class).isLoggingDebug()) {
+                    if (AssassinsPlugin.getSettings().isLoggingDebug()) {
                         logger.info("Requested command is NOT an IWaitCommand. Using person WaitCommand for help page.");
                     }
 
@@ -263,8 +274,7 @@ public class PluginDispatcher implements CommandExecutor {
                     // it up so we can provide a help page.
                     if (pluginPlayer.getWaitCommand() != null) {
 
-                        IPluginCommand<? extends IPluginSettings> waitCommand =
-                                commands.get(pluginPlayer.getWaitCommand());
+                        IPluginCommand waitCommand = commands.get(pluginPlayer.getWaitCommand());
 
                         if (waitCommand instanceof IWaitCommand) {
                             ((IWaitCommand) waitCommand).displayWaitHelp(sender);
