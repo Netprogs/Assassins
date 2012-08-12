@@ -14,7 +14,7 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlaye
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.command.util.PlayerUtil;
-import com.netprogs.minecraft.plugins.assassins.command.util.TimerUtil;
+import com.netprogs.minecraft.plugins.assassins.command.util.TimerManager;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
 import com.netprogs.minecraft.plugins.assassins.config.settings.Blitz;
 import com.netprogs.minecraft.plugins.assassins.help.HelpMessage;
@@ -83,11 +83,11 @@ public class CommandBlitz extends PluginCommand {
         PluginPlayer pluginPlayer = AssassinsPlugin.getStorage().getPlayer(player);
 
         // check the timer for the command
-        long timeRemaining = AssassinsPlugin.getCommandTimer().commandOnTimer(player.getName(), this.getCommandType());
+        long timeRemaining = AssassinsPlugin.getTimerManager().commandOnTimer(player.getName(), this.getCommandType());
         if (timeRemaining != 0) {
 
             MessageUtil.sendMessage(sender, "assassins.command.blitz.onTimer", ChatColor.GREEN, new MessageParameter(
-                    "<time>", TimerUtil.formatTimeShort(timeRemaining), ChatColor.GREEN));
+                    "<time>", TimerManager.formatTimeShort(timeRemaining), ChatColor.GREEN));
 
             return false;
         }
@@ -131,6 +131,14 @@ public class CommandBlitz extends PluginCommand {
             MessageUtil.sendMessage(sender, "assassins.command.blitz.notWithinRange", ChatColor.GREEN,
                     new MessageParameter("<player>", huntedPlayerName, ChatColor.AQUA));
 
+            return false;
+        }
+
+        // if the blitz duration is <= 0, then don't activate
+        if (blitz.getDuration() <= 0) {
+            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+                AssassinsPlugin.logger().info("Blitz duration is 0, will not activate.");
+            }
             return false;
         }
 
@@ -181,20 +189,19 @@ public class CommandBlitz extends PluginCommand {
         }
 
         // place this command on timer so it can't be used again until it expires
-        AssassinsPlugin.getCommandTimer().updateCommandTimer(player.getName(), this.getCommandType(),
+        AssassinsPlugin.getTimerManager().updateCommandTimer(player.getName(), this.getCommandType(),
                 blitz.getCooldown());
 
         // Create the blitz runnable and place it on a delayed scheduler
         // This will remove the compass adjustment and apply any side effects upon expire of the blitz
         BlitzRunnable runnable = new BlitzRunnable(player.getName(), huntedPlayer.getName());
-        AssassinsPlugin.instance.getServer().getScheduler()
-                .scheduleSyncDelayedTask(AssassinsPlugin.instance, runnable, durationTicks);
+        plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, runnable, durationTicks);
 
         // tell the player their blitz has been activated
         long timer = System.currentTimeMillis() + (blitz.getDuration() * 1000);
         long remaining = (timer - System.currentTimeMillis());
         MessageUtil.sendMessage(sender, "assassins.command.blitz.activated", ChatColor.GOLD, new MessageParameter(
-                "<time>", TimerUtil.formatTimeShort(remaining), ChatColor.GOLD));
+                "<time>", TimerManager.formatTimeShort(remaining), ChatColor.GOLD));
 
         return true;
     }

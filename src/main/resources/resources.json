@@ -104,6 +104,7 @@
     "plugin.error.cannotFindPlayer": "Player <player> could not be found.",
     "plugin.error.senderNotPlayer": "Sorry, you cannot run this from the console.",
     "plugin.error.invalidPermissions": "Sorry, you do not have the permission to run this command.",
-    "plugin.error.unknownArguments": "Unknown arguments. Use &e/assassins help&c if needed."
+    "plugin.error.unknownArguments": "Unknown arguments. Help page for command below.",
+    "plugin.error.unknownCommand": "Unknown arguments. Use &e/assassins help&c if needed."
   }
 }

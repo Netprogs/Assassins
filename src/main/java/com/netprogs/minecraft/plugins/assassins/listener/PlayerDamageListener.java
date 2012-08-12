@@ -44,9 +44,9 @@ public class PlayerDamageListener implements Listener {
         // check early to see what's being damaged
         if (event.getEntityType() != EntityType.PLAYER && !(event.getEntity() instanceof Tameable)) {
 
-            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
-                AssassinsPlugin.logger().info("PlayerDamage_Entity: not using target");
-            }
+            // if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+            // AssassinsPlugin.logger().info("PlayerDamage_Entity: not using target");
+            // }
 
             return;
         }
@@ -55,9 +55,9 @@ public class PlayerDamageListener implements Listener {
         if (!(event.getDamager() instanceof Player) && !(event.getDamager() instanceof Projectile)
                 && !(event.getDamager() instanceof Tameable)) {
 
-            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
-                AssassinsPlugin.logger().info("PlayerDamage_Entity: not using damager");
-            }
+            // if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+            // AssassinsPlugin.logger().info("PlayerDamage_Entity: not using damager");
+            // }
 
             return;
         }
@@ -88,9 +88,9 @@ public class PlayerDamageListener implements Listener {
 
         // no valid target, give up
         if (target == null) {
-            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
-                AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable target");
-            }
+            // if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+            // AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable target");
+            // }
             return;
         }
 
@@ -124,9 +124,9 @@ public class PlayerDamageListener implements Listener {
 
         // no valid damager, give up
         if (damager == null) {
-            if (AssassinsPlugin.getSettings().isLoggingDebug()) {
-                AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable damager");
-            }
+            // if (AssassinsPlugin.getSettings().isLoggingDebug()) {
+            // AssassinsPlugin.logger().info("PlayerDamage_Entity: non-usable damager");
+            // }
             return;
         }
 

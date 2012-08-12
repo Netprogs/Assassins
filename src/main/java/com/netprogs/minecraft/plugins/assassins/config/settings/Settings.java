@@ -32,10 +32,10 @@ public class Settings {
     private int locationTrackingAdjustment;
 
     // The blitz settings
-    private Blitz blitz;
+    private Blitz blitz = new Blitz();
 
     // The Auto Contract settings
-    private AutoContractor autoContractor;
+    private AutoContractor autoContractor = new AutoContractor();
 
     private boolean loggingDebug;
 

@@ -8,6 +8,7 @@ import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageParameter;
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
+import com.netprogs.minecraft.plugins.assassins.event.AssassinsContractCompletedEvent;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Contract;
 import com.netprogs.minecraft.plugins.assassins.storage.data.Payment;
 import com.netprogs.minecraft.plugins.assassins.storage.data.PlayerContracts;
@@ -63,6 +64,12 @@ public class PlayerDeathListener implements Listener {
             // Get all your contracts for this player. This will return NULL if your hunter timer has expired
             PlayerContracts playerContracts = attackerPluginPlayer.getPlayerContracts(player.getName());
             if (playerContracts != null) {
+
+                // If there are contracts found, that means the assassin had contracts on the dead player
+                // Let's fire an event saying an assassin was responsible for the kill
+                AssassinsContractCompletedEvent contractCompletedEvent =
+                        new AssassinsContractCompletedEvent(attackerPlayer, player, playerContracts);
+                Bukkit.getServer().getPluginManager().callEvent(contractCompletedEvent);
 
                 // grab the list of contracts for payments
                 for (Contract contract : playerContracts.getContracts()) {

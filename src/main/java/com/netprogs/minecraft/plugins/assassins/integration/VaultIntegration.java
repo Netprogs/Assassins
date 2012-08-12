@@ -165,8 +165,11 @@ public class VaultIntegration extends PluginIntegration {
             } else {
 
                 if (isLoggingDebug()) {
-                    getPlugin().getLogger().info("withdraw] failed: " + response.errorMessage);
+                    getPlugin().getLogger().info("[withdraw] failed: " + response.errorMessage);
                 }
+
+                // They seem to have run out of money.
+                return false;
             }
 
         } else {
@@ -182,7 +185,7 @@ public class VaultIntegration extends PluginIntegration {
         return true;
     }
 
-    public void depositContractPayment(String playerName, double payment) {
+    public boolean depositContractPayment(String playerName, double payment) {
 
         // put the payment onto the players account
         EconomyResponse response = economy.depositPlayer(playerName, payment);
@@ -192,11 +195,15 @@ public class VaultIntegration extends PluginIntegration {
                 getPlugin().getLogger().info("[deposit]: " + payment);
             }
 
+            return true;
+
         } else {
 
             if (isLoggingDebug()) {
                 getPlugin().getLogger().info("[deposit] failed: " + response.errorMessage);
             }
+
+            return false;
         }
     }
 }

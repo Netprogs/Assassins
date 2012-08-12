@@ -30,7 +30,7 @@ public class JsonDataManager {
     public JsonDataManager() {
 
         // create and run the JSON configuration loader
-        storage = new JsonStorage(AssassinsPlugin.instance.getDataFolder() + "/storage.json");
+        storage = new JsonStorage(AssassinsPlugin.getFolder() + "/storage.json");
         storage.loadConfig();
     }
 

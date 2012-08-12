@@ -1,6 +1,6 @@
 name: Assassins
 main: com.netprogs.minecraft.plugins.assassins.AssassinsPlugin
-version: 1.2.0
+version: 1.2.1
 author: Scott Milne
 description: Allows players to become and/or hire "Assassins" on their servers.
 depend: [Vault]

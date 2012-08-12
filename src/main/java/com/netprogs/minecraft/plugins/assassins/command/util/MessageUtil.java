@@ -72,34 +72,6 @@ public class MessageUtil {
     public static void sendHeaderMessage(CommandSender receiver, String resource) {
 
         sendHeaderMessage(receiver, resource, 0, 0);
-
-        // ResourcesConfig resources = PluginConfig.getInstance().getConfig(ResourcesConfig.class);
-        //
-        // ChatColor SPACER_COLOR = ChatColor.YELLOW;
-        // ChatColor TITLE_COLOR = ChatColor.AQUA;
-        //
-        // // create our header
-        // String title = resources.getResource(resource);
-        // if (title == null) {
-        // AssassinsPlugin.logger().log(Level.SEVERE, "Could not find resource: " + resource);
-        // return;
-        // }
-        //
-        // title = " " + title + " ";
-        //
-        // String headerSpacer = StringUtils.repeat("-", 52);
-        //
-        // int midPoint = ((headerSpacer.length() / 2) - (title.length() / 2));
-        // String start = headerSpacer.substring(0, midPoint);
-        // String middle = title;
-        // String end = headerSpacer.substring(midPoint + title.length());
-        //
-        // // combine it all into the final header
-        // String displayHeader = SPACER_COLOR + start + TITLE_COLOR + middle + SPACER_COLOR + end;
-        //
-        // // send the message
-        // displayHeader = displayHeader.replaceAll("(&([A-Fa-f0-9L-Ol-o]))", "\u00A7$2");
-        // receiver.sendMessage(displayHeader);
     }
 
     public static void sendFooterMessage(CommandSender receiver, String resource) {

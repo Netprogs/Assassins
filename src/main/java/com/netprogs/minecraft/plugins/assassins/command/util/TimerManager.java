@@ -34,7 +34,7 @@ import org.bukkit.plugin.Plugin;
  * This utility class keeps track of timers for commands and events.
  * The information stored here is not persisted, so when the server is restarted, the timers are cleared.
  */
-public class TimerUtil {
+public class TimerManager {
 
     private Logger logger;
     private boolean isLoggingDebug;
@@ -48,7 +48,7 @@ public class TimerUtil {
     private final ReentrantReadWriteLock rwCommandLock = new ReentrantReadWriteLock(true);
     private final ReentrantReadWriteLock rwEventLock = new ReentrantReadWriteLock(true);
 
-    public TimerUtil(Plugin plugin, boolean isLoggingDebug) {
+    public TimerManager(Plugin plugin, boolean isLoggingDebug) {
 
         logger = plugin.getLogger();
         this.isLoggingDebug = isLoggingDebug;

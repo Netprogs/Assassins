@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.netprogs.minecraft.plugins.assassins.command.PluginDispatcher;
-import com.netprogs.minecraft.plugins.assassins.command.util.TimerUtil;
+import com.netprogs.minecraft.plugins.assassins.command.util.TimerManager;
 import com.netprogs.minecraft.plugins.assassins.config.resources.ResourcesConfig;
 import com.netprogs.minecraft.plugins.assassins.config.settings.SettingsConfig;
 import com.netprogs.minecraft.plugins.assassins.integration.VaultIntegration;
@@ -41,10 +41,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class AssassinsPlugin extends JavaPlugin {
 
-    private final Logger logger = Logger.getLogger("Minecraft");
-
     // expose the instance of this class as a global so we can better access it's methods
-    public static AssassinsPlugin instance;
+    private static AssassinsPlugin instance;
 
     // used for sending completely anonymous data to http://mcstats.org for usage tracking
     private Metrics metrics;
@@ -62,12 +60,10 @@ public class AssassinsPlugin extends JavaPlugin {
     private VaultIntegration vault;
 
     // used to manage command timers
-    private TimerUtil commandTimer;
-
-    private String pluginName;
-    private File pluginFolder;
+    private TimerManager timerManager;
 
     public AssassinsPlugin() {
+
         instance = this;
     }
 
@@ -75,9 +71,6 @@ public class AssassinsPlugin extends JavaPlugin {
 
         // report that this plug in is being loaded
         PluginDescriptionFile pdfFile = getDescription();
-
-        pluginName = getDescription().getName();
-        pluginFolder = getDataFolder();
 
         // create the settings configuration object
         settingsConfig = new SettingsConfig(getDataFolder() + "/config.json");
@@ -96,7 +89,7 @@ public class AssassinsPlugin extends JavaPlugin {
 
         // check to make sure Vault is installed
         if (!vault.isEnabled()) {
-            logger.info("[" + pdfFile.getName() + "] v" + pdfFile.getVersion() + " has been disabled.");
+            getLogger().info("Disabled v" + pdfFile.getVersion());
             return;
         }
 
@@ -111,7 +104,7 @@ public class AssassinsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 
         // create the command timer instance
-        commandTimer = new TimerUtil(this, settingsConfig.isLoggingDebug());
+        timerManager = new TimerManager(this, settingsConfig.isLoggingDebug());
 
         // start up the metrics engine
         try {
@@ -120,28 +113,24 @@ public class AssassinsPlugin extends JavaPlugin {
             metrics.start();
 
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Error while enabling Metrics.");
+            getLogger().log(Level.WARNING, "Error while enabling Metrics.");
         }
 
         // Okay, we're done
-        logger.info("[" + pdfFile.getName() + "] v" + pdfFile.getVersion() + " has been enabled.");
+        getLogger().info("Enabled v" + pdfFile.getVersion());
     }
 
     public void onDisable() {
 
         PluginDescriptionFile pdfFile = getDescription();
-        this.logger.info("[" + pdfFile.getName() + "] has been disabled.");
+        getLogger().info("Disabled v" + pdfFile.getVersion());
 
         // clear out all the static references to avoid leaks
         instance = null;
     }
 
-    public String getPluginName() {
-        return pluginName;
-    }
-
-    public File getPluginFolder() {
-        return pluginFolder;
+    public static File getFolder() {
+        return instance.getDataFolder();
     }
 
     public static Logger logger() {
@@ -164,7 +153,7 @@ public class AssassinsPlugin extends JavaPlugin {
         return instance.resourcesConfig;
     }
 
-    public static TimerUtil getCommandTimer() {
-        return instance.commandTimer;
+    public static TimerManager getTimerManager() {
+        return instance.timerManager;
     }
 }

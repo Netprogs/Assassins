@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import com.netprogs.minecraft.plugins.assassins.AssassinsPlugin;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer;
 import com.netprogs.minecraft.plugins.assassins.PluginPlayer.WaitState;
+import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandBlitz;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandCancel;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandContracts;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandExpired;
@@ -35,7 +36,6 @@ import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandHunt;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandKill;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandProtect;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandRevenge;
-import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandBlitz;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandTrack;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandView;
 import com.netprogs.minecraft.plugins.assassins.command.dispatch.CommandWanted;
@@ -47,6 +47,7 @@ import com.netprogs.minecraft.plugins.assassins.command.exception.SenderNotPlaye
 import com.netprogs.minecraft.plugins.assassins.command.util.MessageUtil;
 import com.netprogs.minecraft.plugins.assassins.help.HelpBook;
 import com.netprogs.minecraft.plugins.assassins.help.HelpPage;
+import com.netprogs.minecraft.plugins.assassins.help.IHelpEntry;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -135,6 +136,11 @@ public class PluginDispatcher implements CommandExecutor {
 
                     // If we're here, the command wasn't given enough information.
                     MessageUtil.sendUnknownArgumentsMessage(sender);
+
+                    // display the help page for the attempted command
+                    for (IHelpEntry helpEntry : pluginCommand.help().getEntries()) {
+                        MessageUtil.sendMessage(sender, helpEntry.display());
+                    }
 
                 } catch (InvalidPermissionsException exception) {
 
