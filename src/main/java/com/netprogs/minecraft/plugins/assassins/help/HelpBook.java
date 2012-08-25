@@ -88,18 +88,18 @@ public class HelpBook {
         // get the resources
         ResourcesConfig resources = AssassinsPlugin.getResources();
 
-        // check to make sure the page number is valid
-        if (pageNumber <= 0 || pageNumber > availableHelpPages.size()) {
-
-            String helpTitle = resources.getResource("plugin.help.wrongPage");
-            sendMessage(sender, ChatColor.RED + helpTitle);
-            return false;
-        }
-
         // check to see if the user has any pages available to them
         if (availableHelpPages.size() == 0) {
 
             String helpTitle = resources.getResource("plugin.help.noneAvailable");
+            sendMessage(sender, ChatColor.RED + helpTitle);
+            return false;
+        }
+
+        // check to make sure the page number is valid
+        if (pageNumber <= 0 || pageNumber > availableHelpPages.size()) {
+
+            String helpTitle = resources.getResource("plugin.help.wrongPage");
             sendMessage(sender, ChatColor.RED + helpTitle);
             return false;
         }
@@ -130,7 +130,7 @@ public class HelpBook {
 
             // display every entry in the segment
             for (IHelpEntry helpEntry : helpSegment.getEntries()) {
-                sendMessage(sender, COMMAND_COLOR + "/assassin " + helpEntry.display());
+                sendMessage(sender, COMMAND_COLOR + helpEntry.display());
             }
         }
     }
@@ -149,7 +149,10 @@ public class HelpBook {
         String helpTitle = resources.getResource("plugin.help.header");
         helpTitle = " " + helpTitle + " ";
         helpTitle = helpTitle.replaceAll("<plugin>", pluginName);
-        helpTitle += " (" + pageNumber + "/" + helpPageList.size() + ") ";
+
+        if (helpPageList.size() > 0) {
+            helpTitle += " (" + pageNumber + "/" + helpPageList.size() + ") ";
+        }
 
         String headerSpacer = StringUtils.repeat("-", 52);
 

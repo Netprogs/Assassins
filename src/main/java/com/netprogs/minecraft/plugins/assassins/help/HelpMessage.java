@@ -40,7 +40,7 @@ public class HelpMessage implements IHelpEntry {
     public String display() {
 
         StringBuffer buffer = new StringBuffer();
-        buffer.append(HelpBook.COMMAND_COLOR + command);
+        buffer.append(HelpBook.COMMAND_COLOR + "/assassin " + command);
 
         if (!StringUtils.isEmpty(arguments)) {
             buffer.append(HelpBook.PARAMS_COLOR);
